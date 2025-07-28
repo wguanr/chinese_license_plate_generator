@@ -1,0 +1,665 @@
+# PCG-USD 核心模块 API 文档
+
+## 概述
+
+PCG-USD 核心模块 (`core`) 提供了中国车牌PCG系统的基础设施，包括材质参数管理、算法框架、异常处理和系统初始化功能。
+
+### 核心设计原则
+
+- **精简接口**: 只导出最必要的12个核心接口
+- **类型安全**: 完整的类型注解支持
+- **异常安全**: 统一的异常处理体系
+- **延迟加载**: 支持可选依赖的优雅降级
+
+### 导出的核心接口
+
+```python
+from core import (
+    # 核心数据类
+    MaterialParameters,
+    MaterialParametersBuilder,
+    
+    # 核心算法类
+    BasePCGAlgorithm,
+    ParameterDistributor,
+    DistributionType,
+    MaterialVariantGenerator, 
+    VariantStrategy,
+    
+    # 核心异常
+    PCGSystemError,
+    ValidationError,
+    DependencyError,
+    
+    # 系统初始化
+    initialize_pcg_system
+)
+```
+
+---
+
+## 1. 材质参数管理
+
+### MaterialParameters
+
+**作用**: PBR材质的核心参数容器，使用dataclass实现。
+
+```python
+@dataclass
+class MaterialParameters:
+    albedo_texture_path: str              # 反照率贴图路径
+    noise_texture_path: str               # 噪声贴图路径
+    noise_tensity: float = 1.0            # 噪声强度 [0.0-2.0]
+    roughness: float = 1.0                # 粗糙度 [0.0-1.0]
+    metallic: float = 0.0                 # 金属度 [0.0-1.0]
+    base_color: Tuple[float, float, float] = (0.8, 0.8, 0.8)  # RGB颜色
+```
+
+#### 核心特性
+
+- **自动验证**: `__post_init__` 中自动验证参数范围
+- **类型安全**: 完整的类型注解
+- **不可变设计**: 建议使用建造者模式修改参数
+
+#### 验证规则
+
+- `noise_tensity`: [0.0, 2.0]
+- `roughness`: [0.0, 1.0]
+- `metallic`: [0.0, 1.0]
+- `base_color`: 每个分量 [0.0, 1.0]
+
+#### 使用示例
+
+```python
+# 基本创建
+material = MaterialParameters(
+    albedo_texture_path="textures/albedo.png",
+    noise_texture_path="textures/noise.png",
+    roughness=0.3,
+    metallic=0.7
+)
+
+# 自动验证失败示例
+try:
+    invalid_material = MaterialParameters(
+        albedo_texture_path="texture.png",
+        noise_texture_path="noise.png",
+        roughness=1.5  # 超出范围
+    )
+except MaterialParameterError as e:
+    print(f"参数错误: {e.field} = {e.value}")
+```
+
+### MaterialParametersBuilder
+
+**作用**: 支持渐进构建和验证的材质参数创建器。
+
+#### 核心方法
+
+```python
+class MaterialParametersBuilder:
+    def set_albedo_texture(self, path: str) -> 'MaterialParametersBuilder'
+    def set_noise_texture(self, path: str) -> 'MaterialParametersBuilder'
+    def set_material_properties(self, roughness: float = 1.0, 
+                              metallic: float = 0.0,
+                              noise_tensity: float = 1.0) -> 'MaterialParametersBuilder'
+    def set_base_color(self, r: float, g: float, b: float) -> 'MaterialParametersBuilder'
+    def build(self, validate: bool = True) -> MaterialParameters
+```
+
+#### 使用示例
+
+```python
+# 链式构建
+builder = MaterialParametersBuilder()
+material = (builder
+    .set_albedo_texture("textures/albedo.png")
+    .set_noise_texture("textures/noise.png")
+    .set_material_properties(roughness=0.3, metallic=0.7)
+    .set_base_color(0.9, 0.9, 0.9)
+    .build())
+```
+
+---
+
+## 2. 算法框架
+
+### BasePCGAlgorithm
+
+**作用**: PCG算法的统一抽象基类，定义算法规范。
+
+```python
+class BasePCGAlgorithm(ABC):
+    def __init__(self, name: str, version: str = "1.0.0")
+    
+    @abstractmethod
+    def generate_variants(self, base_params: Any, count: int, **kwargs) -> List[Any]
+    
+    @abstractmethod 
+    def validate_parameters(self, parameters: Any) -> bool
+    
+    # 基础功能方法
+    def set_parameter(self, key: str, value: Any)
+    def get_parameter(self, key: str, default: Any = None) -> Any
+    def set_random_seed(self, seed: int)
+    def get_random_value(self, min_val: float, max_val: float) -> float
+```
+
+#### 核心特性
+
+- **抽象接口**: 子类必须实现变体生成和参数验证
+- **参数管理**: 内置参数存储和随机数管理
+- **版本控制**: 算法名称和版本管理
+
+#### 使用示例
+
+```python
+@register_algorithm
+class MyAlgorithm(BasePCGAlgorithm):
+    def __init__(self):
+        super().__init__("MyAlgorithm", "1.0.0")
+    
+    def generate_variants(self, base_params, count, **kwargs):
+        # 实现变体生成逻辑
+        variants = []
+        for _ in range(count):
+            # 生成变体逻辑
+            variants.append(self._create_variant(base_params))
+        return variants
+    
+    def validate_parameters(self, parameters):
+        # 实现参数验证
+        return isinstance(parameters, MaterialParameters)
+```
+
+### ParameterDistributor
+
+**作用**: 参数分布器，实现多种分布策略的变体生成。
+
+```python
+class ParameterDistributor(BasePCGAlgorithm):
+    def __init__(self, distribution_type: DistributionType = DistributionType.UNIFORM)
+    
+    def generate_variants(self, 
+                         base_parameters: MaterialParameters, 
+                         count: int = 10, 
+                         **kwargs) -> List[MaterialParameters]
+    
+    def set_distribution_type(self, distribution_type: DistributionType)
+```
+
+#### DistributionType 枚举
+
+```python
+class DistributionType(Enum):
+    UNIFORM = "uniform"          # 均匀分布
+    NORMAL = "normal"           # 正态分布
+    EXPONENTIAL = "exponential"  # 指数分布
+    GRID = "grid"               # 网格分布
+    RANDOM = "random"           # 随机分布
+```
+
+#### 使用示例
+
+```python
+# 创建分布器
+distributor = ParameterDistributor(DistributionType.NORMAL)
+
+# 生成变体
+base_material = MaterialParameters(
+    albedo_texture_path="textures/base.png",
+    noise_texture_path="textures/noise.png"
+)
+
+variants = distributor.generate_variants(
+    base_parameters=base_material,
+    count=20,
+    parameter_ranges={
+        'roughness': (0.1, 0.9),
+        'metallic': (0.0, 0.8)
+    }
+)
+```
+
+### MaterialVariantGenerator
+
+**作用**: 高级材质变体生成器，支持复杂的生成策略。
+
+```python
+class MaterialVariantGenerator(BasePCGAlgorithm):
+    def __init__(self, strategy: VariantStrategy = VariantStrategy.PARAMETRIC)
+    
+    def generate_variants(self, 
+                         base_parameters: MaterialParameters, 
+                         count: int = 10, 
+                         **kwargs) -> List[MaterialParameters]
+    
+    def generate_themed_variants(self,
+                               base_parameters: MaterialParameters,
+                               theme: str,
+                               count: int = 10) -> List[MaterialParameters]
+```
+
+#### VariantStrategy 枚举
+
+```python
+class VariantStrategy(Enum):
+    PARAMETRIC = "parametric"      # 参数化变体
+    TEXTURE_BASED = "texture_based"  # 基于贴图的变体
+    HYBRID = "hybrid"              # 混合策略
+```
+
+#### 支持的主题
+
+- `"metal"`: 金属材质主题
+- `"concrete"`: 混凝土主题  
+- `"wood"`: 木材主题
+- `"fabric"`: 织物主题
+
+#### 使用示例
+
+```python
+# 创建生成器
+generator = MaterialVariantGenerator(VariantStrategy.HYBRID)
+
+# 生成主题化变体
+metal_variants = generator.generate_themed_variants(
+    base_material, theme="metal", count=15
+)
+
+# 基础变体生成
+variants = generator.generate_variants(
+    base_material, 
+    count=10,
+    strategy_params={'texture_variation': True}
+)
+```
+
+---
+
+## 3. 异常处理体系
+
+### 核心异常类
+
+#### PCGSystemError
+
+**作用**: 系统基础异常，所有PCG异常的基类。
+
+```python
+class PCGSystemError(Exception):
+    def __init__(self, message: str, error_code: str = None, details: Dict[str, Any] = None)
+    
+    # 属性
+    message: str           # 错误信息
+    error_code: str        # 错误码
+    details: Dict[str, Any]  # 详细信息
+```
+
+#### ValidationError
+
+**作用**: 参数验证错误。
+
+```python
+class ValidationError(PCGSystemError):
+    def __init__(self, message: str, field: str = None, value: Any = None, **kwargs)
+    
+    # 额外属性
+    field: str    # 验证失败的字段
+    value: Any    # 验证失败的值
+```
+
+#### DependencyError
+
+**作用**: 依赖不可用错误。
+
+```python
+class DependencyError(PCGSystemError):
+    def __init__(self, message: str, dependency_name: str = None, **kwargs)
+    
+    # 额外属性
+    dependency_name: str  # 缺失的依赖名称
+```
+
+#### 使用示例
+
+```python
+try:
+    material = MaterialParameters(
+        albedo_texture_path="texture.png",
+        noise_texture_path="noise.png",
+        roughness=1.5  # 无效值
+    )
+except ValidationError as e:
+    print(f"验证错误: {e.message}")
+    print(f"字段: {e.field}, 值: {e.value}")
+    print(f"错误码: {e.error_code}")
+
+try:
+    from core import get_usd_manager
+    usd_manager = get_usd_manager()
+except DependencyError as e:
+    print(f"依赖错误: {e.dependency_name} 不可用")
+```
+
+---
+
+## 4. 系统初始化
+
+### initialize_pcg_system()
+
+**作用**: 系统初始化函数，检查组件状态并配置系统。
+
+```python
+def initialize_pcg_system(enable_usd: bool = False, 
+                         verbose: bool = True) -> dict
+```
+
+#### 参数说明
+
+- `enable_usd`: 是否启用USD支持（需要pxr库）
+- `verbose`: 是否显示详细的状态信息
+
+#### 返回值
+
+```python
+{
+    'success': bool,           # 初始化是否成功
+    'enabled_features': List[str],  # 已启用的功能列表
+    'warnings': List[str],     # 警告信息
+    'errors': List[str]        # 错误信息
+}
+```
+
+#### 使用示例
+
+```python
+# 基础初始化
+result = initialize_pcg_system()
+if result['success']:
+    print("✅ 系统初始化成功")
+    print(f"已启用功能: {result['enabled_features']}")
+else:
+    print("❌ 系统初始化失败")
+    for error in result['errors']:
+        print(f"  - {error}")
+
+# 启用USD支持
+result = initialize_pcg_system(enable_usd=True, verbose=True)
+```
+
+---
+
+## 5. 使用模式和最佳实践
+
+### 基础材质创建模式
+
+```python
+from core import MaterialParameters, MaterialParametersBuilder
+
+# 方式1: 直接创建
+material = MaterialParameters(
+    albedo_texture_path="textures/plate_albedo.png",
+    noise_texture_path="textures/noise.png",
+    roughness=0.2,
+    metallic=0.8
+)
+
+# 方式2: 建造者模式
+builder = MaterialParametersBuilder()
+material = (builder
+    .set_albedo_texture("textures/albedo.png")
+    .set_noise_texture("textures/noise.png")
+    .set_material_properties(roughness=0.3, metallic=0.7)
+    .set_base_color(0.9, 0.9, 0.9)
+    .build())
+```
+
+### 变体生成模式
+
+```python
+from core import ParameterDistributor, DistributionType, MaterialVariantGenerator, VariantStrategy
+
+# 使用参数分布器
+distributor = ParameterDistributor(DistributionType.NORMAL)
+variants = distributor.generate_variants(base_material, count=20)
+
+# 使用变体生成器
+generator = MaterialVariantGenerator(VariantStrategy.HYBRID)
+themed_variants = generator.generate_themed_variants(
+    base_material, theme="metal", count=15
+)
+```
+
+### 异常处理模式
+
+```python
+from core import PCGSystemError, ValidationError, DependencyError
+
+try:
+    # 材质创建逻辑
+    material = create_complex_material()
+    variants = generate_variants(material)
+except ValidationError as e:
+    print(f"参数验证失败: {e.field} = {e.value}")
+except DependencyError as e:
+    print(f"依赖 {e.dependency_name} 不可用，使用基础功能")
+except PCGSystemError as e:
+    print(f"系统错误 [{e.error_code}]: {e.message}")
+```
+
+### 系统初始化模式
+
+```python
+from core import initialize_pcg_system
+
+# 初始化系统
+result = initialize_pcg_system(enable_usd=False, verbose=True)
+
+if result['success']:
+    # 系统就绪，开始使用
+    from core import MaterialParameters, ParameterDistributor
+    
+    # 正常使用流程
+    material = MaterialParameters(...)
+    distributor = ParameterDistributor()
+    variants = distributor.generate_variants(material, count=10)
+else:
+    print("系统初始化失败:")
+    for error in result['errors']:
+        print(f"  - {error}")
+```
+
+### 自定义算法扩展
+
+```python
+from core import BasePCGAlgorithm, MaterialParameters
+from typing import List
+
+class CustomAlgorithm(BasePCGAlgorithm):
+    """自定义算法示例"""
+    
+    def __init__(self):
+        super().__init__("CustomAlgorithm", "1.0.0")
+        self.set_parameter("variation_factor", 0.1)
+    
+    def generate_variants(self, base_params: MaterialParameters, 
+                         count: int, **kwargs) -> List[MaterialParameters]:
+        """实现自定义变体生成逻辑"""
+        variants = []
+        variation = self.get_parameter("variation_factor", 0.1)
+        
+        for i in range(count):
+            # 生成变体参数
+            new_roughness = max(0.0, min(1.0, 
+                base_params.roughness + self.get_random_value(-variation, variation)))
+            new_metallic = max(0.0, min(1.0,
+                base_params.metallic + self.get_random_value(-variation, variation)))
+            
+            # 创建变体
+            variant = MaterialParameters(
+                albedo_texture_path=base_params.albedo_texture_path,
+                noise_texture_path=base_params.noise_texture_path,
+                roughness=new_roughness,
+                metallic=new_metallic,
+                noise_tensity=base_params.noise_tensity,
+                base_color=base_params.base_color
+            )
+            variants.append(variant)
+        
+        return variants
+    
+    def validate_parameters(self, parameters: MaterialParameters) -> bool:
+        """验证参数"""
+        try:
+            # MaterialParameters 自带验证
+            return True
+        except Exception:
+            return False
+
+# 使用自定义算法
+algorithm = CustomAlgorithm()
+algorithm.set_parameter("variation_factor", 0.2)
+variants = algorithm.generate_variants(base_material, count=5)
+```
+
+---
+
+## 6. 性能考虑
+
+### 内存管理
+
+- **MaterialParameters** 使用dataclass，内存开销较小
+- 避免创建大量不必要的变体
+- 及时释放不再需要的材质参数
+
+### 算法性能
+
+- **ParameterDistributor** 适合简单的参数变化
+- **MaterialVariantGenerator** 适合复杂的主题化生成
+- 根据需求选择合适的分布类型
+
+### 错误处理开销
+
+- 异常创建有一定开销，避免在性能关键路径中频繁抛出
+- 使用参数验证减少运行时错误
+
+---
+
+## 7. 版本兼容性
+
+### 当前版本: 2.0.0
+
+- ✅ **精简接口**: 只导出12个核心接口
+- ✅ **类型安全**: 完整的类型注解支持
+- ✅ **异常安全**: 统一的异常处理体系
+- ✅ **向后兼容**: 内部接口仍可通过完整路径访问
+
+### 升级指南
+
+从旧版本升级时：
+
+1. **更新导入**: 使用精简的导入列表
+2. **异常处理**: 使用新的异常类型
+3. **参数验证**: 利用自动参数验证功能
+
+---
+
+## 8. 扩展指南
+
+### 添加新的分布算法
+
+继承 `BasePCGAlgorithm` 并实现必要的抽象方法：
+
+```python
+from core import BasePCGAlgorithm
+
+class NewDistributionAlgorithm(BasePCGAlgorithm):
+    def generate_variants(self, base_params, count, **kwargs):
+        # 实现新的分布逻辑
+        pass
+    
+    def validate_parameters(self, parameters):
+        # 实现参数验证
+        pass
+```
+
+### 扩展异常处理
+
+继承核心异常类创建特定异常：
+
+```python
+from core import PCGSystemError
+
+class CustomProcessingError(PCGSystemError):
+    def __init__(self, message: str, process_name: str = None, **kwargs):
+        super().__init__(message, **kwargs)
+        self.process_name = process_name
+```
+
+### 集成新功能
+
+使用系统的依赖管理机制集成新功能，确保优雅降级。
+
+---
+
+## 9. 调试和诊断
+
+### 系统状态检查
+
+```python
+from core import initialize_pcg_system
+
+# 获取详细的系统状态
+result = initialize_pcg_system(verbose=True)
+
+# 检查特定功能
+if 'core_modules' in result['enabled_features']:
+    print("✅ 核心模块可用")
+
+# 查看警告信息
+for warning in result['warnings']:
+    print(f"⚠️  {warning}")
+```
+
+### 异常诊断
+
+```python
+import traceback
+from core import PCGSystemError
+
+try:
+    # 可能出错的操作
+    risky_operation()
+except PCGSystemError as e:
+    print(f"PCG系统错误: {e}")
+    print(f"错误码: {e.error_code}")
+    print(f"详细信息: {e.details}")
+    traceback.print_exc()
+```
+
+---
+
+## 10. 参考资料
+
+### 核心文件引用
+
+- **[core/**init**.py](mdc:core/__init__.py)** - 模块初始化和导出
+- **[core/material_params.py](mdc:core/material_params.py)** - 材质参数管理
+- **[core/base_algorithm.py](mdc:core/base_algorithm.py)** - 算法框架
+- **[core/parameter_distributor.py](mdc:core/parameter_distributor.py)** - 参数分布器
+- **[core/variant_generator.py](mdc:core/variant_generator.py)** - 变体生成器
+- **[core/exceptions.py](mdc:core/exceptions.py)** - 异常处理体系
+
+### 相关配置
+
+- **[config/config.py](mdc:config/config.py)** - 系统配置
+- **[standalone_license_plate_generator.py](mdc:standalone_license_plate_generator.py)** - 主程序示例
+
+### OpenUSD 和 MDL 规范
+
+- **OpenUSD规范**: <https://openusd.org/dev/api/usd_shade_page_front.html>
+- **MDL规范**: <https://www.nvidia.com/en-us/design-visualization/technologies/material-definition-language/>
+
+---
+
+这个精简的API文档专注于核心接口和实际使用，避免了不必要的复杂性，确保开发者能够快速上手并正确使用PCG-USD系统。

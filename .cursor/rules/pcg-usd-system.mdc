@@ -1,0 +1,287 @@
+---
+alwaysApply: true
+description: 基于USD规范的PCG程序化内容生成系统规则
+---
+
+# PCG-USD材质系统规则
+
+这是一个基于OpenUSD规范的程序化内容生成（PCG）系统，主要用于创建和管理车牌贴图及其usd模型的生成。
+
+## 重要规范
+- **OpenUSD规范**: https://openusd.org/dev/api/usd_shade_page_front.html
+- **MDL规范**: https://www.nvidia.com/en-us/design-visualization/technologies/material-definition-language/ mdl材质可以自己写，不一定通过python接口生成
+- **PBR标准**: 基于物理的渲染材质标准
+
+## PCG工作流程概述
+
+### 1. 流程总览
+```
+配置加载 → 资源初始化 → 内容生成 → 材质创建 → USD导出 → 验证优化
+    ↓           ↓           ↓           ↓           ↓           ↓
+[配置解析] → [模板加载] → [PCG算法] → [MDL生成] → [USD构建] → [质量检查]
+```
+
+### 2. 详细工作流程
+
+#### 阶段1: 配置初始化 (Configuration Initialization)
+1. **配置文件加载**: 读取 [config/pcg_pipeline_config.json](mdc:config/pcg_pipeline_config.json)
+2. **参数验证**: 通过 [config/schema.py](mdc:config/schema.py) 验证配置有效性
+3. **资源路径解析**: 建立贴图、模板、输出路径的映射关系
+4. **环境检查**: 验证USD、MDL运行环境和依赖库
+
+#### 阶段2: 模板和资源准备 (Template & Asset Preparation)
+1. **MDL模板加载**: 从 `assets/pbr_mixed_material.mdl` 加载基础材质模板
+2. **USD模板初始化**: 读取 `assets/usd_material_template.usda` 和 `assets/shader_definitions.usda`
+3. **贴图资源扫描**: 扫描并缓存可用的基础贴图资源
+4. **依赖关系建立**: 通过 `TextureResolver` 建立资源依赖图
+
+#### 阶段3: PCG内容生成 (Procedural Content Generation)
+1. **参数分布计算**: `ParameterDistributor` 根据算法生成材质参数变体
+   - 随机分布算法 (Random Distribution)
+   - 网格分布算法 (Grid Distribution)  
+   - 自定义分布策略 (Custom Distribution)
+
+2. **变体生成**: `MaterialVariantGenerator` 执行具体的内容生成
+   ```python
+   # 生成流程示例
+   for variant_config in parameter_distributions:
+       # 生成车牌文字和数字
+       plate_content = generate_plate_content(variant_config)
+       
+       # 生成贴图变体
+       texture_variant = generate_texture_variant(plate_content, style_params)
+       
+       # 创建材质参数集
+       material_params = MaterialParameters(
+           diffuse_texture=texture_variant.diffuse,
+           normal_texture=texture_variant.normal,
+           roughness_value=variant_config.roughness,
+           metallic_value=variant_config.metallic
+       )
+   ```
+
+3. **批处理管理**: `BatchProcessor` 协调大规模并行生成
+
+#### 阶段4: 材质系统构建 (Material System Construction)
+1. **MDL材质生成**: `MDLMaterialManager` 基于模板创建具体的MDL文件
+   ```mdl
+   // 生成的MDL材质示例
+   material license_plate_material_v001(
+       uniform texture_2d diffuse_texture = texture_2d(),
+       uniform texture_2d normal_texture = texture_2d(),
+       uniform float roughness = 0.8,
+       uniform float metallic = 0.1
+   ) = material(
+       surface: material_surface(
+           scattering: df::diffuse_reflection_bsdf(
+               tint: tex::lookup_color(diffuse_texture, state::texture_coordinate(0))
+           ),
+           emission: material_emission()
+       )
+   );
+   ```
+
+2. **USD材质桥接**: `MDLBridge` 确保MDL与USD的兼容性
+3. **着色器网络构建**: 通过 `USDShaderAdapter` 创建UsdShade节点网络
+
+#### 阶段5: USD场景构建 (USD Scene Construction)
+1. **舞台初始化**: `USDMaterialManager` 创建或加载USD Stage
+2. **材质绑定**: 将生成的材质绑定到几何体
+3. **层级结构建立**: 按照USD最佳实践组织场景层级
+4. **元数据添加**: 添加版本信息、生成参数等元数据
+
+#### 阶段6: 输出和验证 (Output & Validation)
+1. **文件输出**: 生成 `.usd`、`.usda` 或 `.usdc` 文件
+2. **依赖路径检查**: 验证所有贴图和资源路径的有效性
+3. **USD验证**: 运行USD schema验证确保文件完整性
+4. **渲染测试**: 可选的快速渲染验证生成结果
+
+## 系统架构
+
+### 核心组件层次
+
+#### 1. USD材质接口层 (USD Material Interface)
+- **USDMaterialManager**: USD材质管理器，负责USD场景图操作
+- **USDShaderAdapter**: USD着色器适配器，处理UsdShade节点
+- **MDLBridge**: MDL-USD桥接器，确保材质兼容性
+
+#### 2. MDL材质实现层 (MDL Material Implementation)  
+- **MaterialParameters**: 材质参数数据类（dataclass）
+- **MDLMaterialManager**: MDL材质管理器，处理MDL文件生成
+- **TextureResolver**: 贴图路径解析器，支持USD Asset Resolution
+
+#### 3. PCG算法层 (PCG Algorithm Layer)
+- **MaterialVariantGenerator**: 材质变体生成器
+- **ParameterDistributor**: 参数分布器，支持随机和规则分布
+- **BatchProcessor**: 批处理器，支持大规模材质生成
+
+### 关键文件组织
+
+#### 核心接口文件
+- [assets/material_interface.py](mdc:assets/material_interface.py) - MDL材质接口实现
+- [core/usd_manager.py](mdc:core/usd_manager.py) - USD管理器核心实现
+- `assets/usd_material_interface.py` - USD材质接口实现
+- `assets/mdl_usd_bridge.py` - MDL-USD桥接器
+
+#### 模板文件
+- `assets/pbr_mixed_material.mdl` - MDL材质模板
+- `assets/usd_material_template.usda` - USD材质模板
+- `assets/shader_definitions.usda` - 着色器定义文件
+
+#### 配置文件
+- `config/material_config.json` - 材质配置模板
+- `config/usd_stage_config.json` - USD舞台配置
+- `config/pcg_pipeline_config.json` - PCG流水线配置
+
+## 核心功能详解
+
+### 1. 车牌内容生成
+- **文字渲染**: 支持中文、英文、数字的车牌文字生成
+- **样式控制**: 字体、颜色、排版的参数化控制
+- **区域适配**: 支持不同地区的车牌格式和规范
+
+### 2. 材质参数管理
+- **依赖跟踪**: 自动跟踪贴图和资源依赖，自动处理材质间的依赖关系
+- **USD Asset Resolution**: 遵循USD资源解析协议
+- **相对路径支持**: 支持相对于USD舞台的路径
+- **跨平台兼容**: 统一路径分隔符处理
+- **资源缓存**: 智能贴图资源缓存机制
+
+### 3. 变体生成策略
+- **参数化生成**: 基于数学函数的参数分布
+- **模板驱动**: 通过模板文件控制生成规则
+- **约束满足**: 确保生成的变体满足物理约束
+
+### 4. PCG流水线集成
+- **参数分布**: 支持多种参数分布策略
+- **增量更新**: 支持增量材质更新
+- **并行处理**: 多线程/多进程材质生成
+- **进度监控**: 实时进度反馈和错误处理
+
+## 数据流和交互
+
+### 输入数据流
+```
+配置文件 → 参数验证 → 分布计算 → 内容生成
+    ↓
+模板文件 → 资源加载 → 材质构建 → USD导出
+    ↓
+贴图资源 → 路径解析 → 依赖管理 → 最终输出
+```
+
+### 模块间交互
+1. **配置驱动**: 所有模块通过配置文件协调工作
+2. **事件通知**: 关键阶段通过事件系统通知其他模块
+3. **资源共享**: 通过缓存机制共享贴图和中间结果
+4. **错误传播**: 统一的异常处理和错误恢复机制
+
+## 兼容性保证
+
+### MDL兼容性
+1. **标准遵循**: 严格遵循MDL 2.0+规范，参考MDL文档进行开发设计
+2. **函数映射**: 确保USD函数到MDL函数的正确映射
+3. **版本管理**: 支持多版本MDL材质的生成和转换
+
+### USD兼容性
+1. **Schema遵循**: 遵循UsdShade schema规范
+2. **版本兼容**: 支持USD 22.03+版本
+3. **命名规范**: 遵循USD命名约定
+4. **性能优化**: 针对USD的读写性能优化
+
+## 工程系统设计
+
+### 编程规范
+遵循的基本原则：尽可能少的使用多层嵌套，让代码简洁清晰，同时保证健壮性。
+
+### 1. 模块化架构
+```
+pcg_usd_system/
+├── assets/                  # 基本数据组件和模板
+│   ├── material_interface.py
+│   ├── pbr_mixed_material.mdl
+│   └── usd_material_template.usda
+├── core/                    # 核心模块
+│   ├── usd_manager.py       # USD管理器
+│   ├── mdl_interface.py     # MDL接口
+│   └── bridge.py           # 桥接器
+│   ├── variant_generator.py
+│   ├── parameter_distributor.py
+│   └── batch_processor.py
+├── utils/                  # 工具模块
+│   ├── path_resolver.py
+│   ├── validation.py
+│   └── logging_config.py
+└── config/                 # 配置模块
+    ├── schema.py
+    └── *.json
+    scrips/
+
+```
+
+### 2. 错误处理策略
+- **层次化异常**: 定义材质系统专用异常层次
+- **回滚机制**: 操作失败时，直接抛出异常或断点
+- **日志记录**: 详细的操作日志和错误追踪
+- **失败恢复**: 支持从中间状态恢复生成过程
+
+### 3. 性能优化
+- **延迟加载**: 贴图和资源的延迟加载
+- **缓存机制**: 智能缓存已生成的材质
+- **并行处理**: 支持多线程材质生成
+- **内存管理**: 优化大规模材质处理的内存使用
+- **流式处理**: 支持大型数据集的流式处理
+
+### 4. 维护性设计
+- **配置驱动**: 通过配置文件控制系统行为
+- **单元测试**: 完整的单元测试覆盖
+- **文档生成**: 自动生成API文档
+- **版本控制**: 支持材质版本管理和回滚
+
+## 扩展指南
+
+### 添加新的PCG算法
+1. 继承`BasePCGAlgorithm`基类
+2. 实现`generate_variants()`方法
+3. 注册到算法管理器
+4. 添加对应的配置schema
+
+### 扩展材质属性
+1. 更新`MaterialParameters`数据类
+2. 修改MDL模板文件
+3. 更新USD材质schema
+4. 添加参数验证逻辑
+
+### 集成新的渲染器
+1. 实现渲染器特定的材质导出器
+2. 添加渲染器配置
+3. 扩展材质验证逻辑
+4. 更新文档说明
+
+### 性能调优建议
+1. **批量处理**: 优先使用批量操作减少I/O开销
+2. **内存监控**: 监控内存使用，及时释放不需要的资源
+3. **并行策略**: 根据CPU核心数调整并行度
+4. **缓存策略**: 合理设置缓存大小和过期策略
+
+## 最佳实践
+
+### 开发流程
+1. **需求分析**: 明确PCG算法的具体需求
+2. **原型开发**: 快速开发功能原型验证可行性
+3. **集成测试**: 确保新功能与现有系统兼容
+4. **性能测试**: 验证大规模生成的性能表现
+5. **文档更新**: 及时更新相关文档
+
+### 质量保证
+1. **代码审查**: 所有代码变更必须经过审查
+2. **自动化测试**: 建立完整的CI/CD流水线
+3. **性能基准**: 建立性能基准和回归测试
+4. **用户验收**: 重要功能需要用户验收测试，结束之后删除不必要的测试文件和脚本
+
+当添加新的PCG算法或扩展功能时，请确保：
+- 保持与USD规范的兼容性
+- 维护MDL材质的标准化
+- 正确处理资源路径解析
+- 维护配置文件的schema一致性
+- 添加相应的单元测试
+- 更新相关文档
