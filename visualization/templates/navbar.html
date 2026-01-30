@@ -1,0 +1,144 @@
+<!-- 统一导航栏组件 -->
+<style>
+    .unified-navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+    }
+    
+    .unified-navbar .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: white;
+        font-size: 20px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .unified-navbar .logo-icon {
+        font-size: 28px;
+    }
+    
+    .unified-navbar .nav-links {
+        display: flex;
+        gap: 5px;
+        margin-left: auto;
+    }
+    
+    .unified-navbar .nav-link {
+        padding: 8px 20px;
+        color: rgba(255,255,255,0.9);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .unified-navbar .nav-link:hover {
+        background: rgba(255,255,255,0.15);
+        color: white;
+    }
+    
+    .unified-navbar .nav-link.active {
+        background: rgba(255,255,255,0.25);
+        color: white;
+        font-weight: 500;
+    }
+    
+    .unified-navbar .nav-icon {
+        font-size: 18px;
+    }
+    
+    /* 为页面内容添加顶部间距 */
+    body.with-navbar {
+        padding-top: 60px;
+    }
+    
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+        .unified-navbar {
+            padding: 0 15px;
+        }
+        
+        .unified-navbar .logo {
+            font-size: 16px;
+        }
+        
+        .unified-navbar .logo-icon {
+            font-size: 24px;
+        }
+        
+        .unified-navbar .nav-links {
+            gap: 2px;
+        }
+        
+        .unified-navbar .nav-link {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        .unified-navbar .nav-link span:not(.nav-icon) {
+            display: none;
+        }
+    }
+</style>
+
+<nav class="unified-navbar">
+    <a href="/" class="logo">
+        <span class="logo-icon">🚗</span>
+        <span>车牌生成器</span>
+    </a>
+    
+    <div class="nav-links">
+        <a href="/" class="nav-link" id="nav-dashboard">
+            <span class="nav-icon">📊</span>
+            <span>Dashboard</span>
+        </a>
+        <a href="/generate" class="nav-link" id="nav-generate">
+            <span class="nav-icon">🎨</span>
+            <span>生成</span>
+        </a>
+        <a href="/viewer3d" class="nav-link" id="nav-viewer3d">
+            <span class="nav-icon">🎬</span>
+            <span>3D查看</span>
+        </a>
+        <a href="/gallery" class="nav-link" id="nav-gallery">
+            <span class="nav-icon">🖼️</span>
+            <span>图库</span>
+        </a>
+        <a href="/assets" class="nav-link" id="nav-assets">
+            <span class="nav-icon">📦</span>
+            <span>资产</span>
+        </a>
+    </div>
+</nav>
+
+<script>
+    // 高亮当前页面
+    (function() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.unified-navbar .nav-link');
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (currentPath === href || (currentPath === '/' && href === '/')) {
+                link.classList.add('active');
+            }
+        });
+        
+        // 为body添加navbar类
+        document.body.classList.add('with-navbar');
+    })();
+</script>

@@ -137,7 +137,6 @@ class TaskManager:
         )
         self.tasks[task.task_id] = task
         self.task_queue.put(task.task_id)
-        print(f"[任务管理器] 创建任务 {task.task_id}, 队列大小: {self.task_queue.qsize()}")
         return task
     
     def get_task(self, task_id: str) -> Optional[GenerationTask]:
@@ -150,29 +149,22 @@ class TaskManager:
     
     def _process_tasks(self):
         """处理任务队列"""
-        print("[任务管理器] Worker线程已启动")
         while self.is_running:
             try:
                 if not self.task_queue.empty():
                     task_id = self.task_queue.get(timeout=1)
-                    print(f"[任务管理器] 开始处理任务: {task_id}")
                     self._execute_task(task_id)
-                    print(f"[任务管理器] 任务完成: {task_id}")
                 else:
                     time.sleep(0.5)
             except Exception as e:
-                print(f"[任务管理器] 任务处理错误: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"任务处理错误: {e}")
     
     def _execute_task(self, task_id: str):
         """执行单个任务"""
         task = self.tasks.get(task_id)
         if not task:
-            print(f"[任务管理器] 任务不存在: {task_id}")
             return
         
-        print(f"[任务管理器] 执行任务 {task_id}, 数量: {task.config.count}")
         task.status = "running"
         task.progress = 0
         
@@ -231,8 +223,8 @@ class TaskManager:
             
             plate_type, is_double = type_mapping.get(config.plate_type, ("blue", False))
             
-            # 调用生成器（使用generate_plate方法）
-            img, number, bg_color, is_double_result = self.generator.generate_plate()
+            # 调用生成器
+            img, number = self.generator.generate_plate_by_type(plate_type, is_double)
             return img, number
             
         except Exception as e:
@@ -342,10 +334,9 @@ class PlateGeneratorApp:
                 font_model_dir = self.project_root / "assets" / "font_model"
                 
                 if plate_model_dir.exists() and font_model_dir.exists():
-                    # MultiPlateGenerator会将路径与脚本目录拼接，所以传入相对路径
                     self.plate_generator = MultiPlateGenerator(
-                        "plate_model",
-                        "font_model"
+                        str(plate_model_dir),
+                        str(font_model_dir)
                     )
                     print("✅ 车牌生成器初始化成功")
                 else:
@@ -367,17 +358,7 @@ class PlateGeneratorApp:
         
         @self.app.route('/')
         def index():
-            """主页 - 统一界面"""
-            return render_template('unified.html')
-        
-        @self.app.route('/unified')
-        def unified_page():
-            """统一管理页面"""
-            return render_template('unified.html')
-        
-        @self.app.route('/admin')
-        def admin_page():
-            """管理面板（旧版）"""
+            """主页 - 管理面板"""
             return render_template('admin.html')
         
         @self.app.route('/generate')
@@ -461,52 +442,46 @@ class PlateGeneratorApp:
         
         @self.app.route('/api/generate/preview', methods=['POST'])
         def api_generate_preview():
-            """生成预览（单张）- 简化版，直接调用生成器"""
+            """生成预览（单张）"""
             try:
                 data = request.get_json()
+                config = PlateConfig(
+                    plate_type=data.get('plate_type', 'blue'),
+                    count=1,
+                    noise_preset=data.get('noise_preset', 'clean'),
+                    province=data.get('province', ''),
+                    custom_number=data.get('custom_number', '')
+                )
                 
                 if not self.plate_generator:
                     return jsonify({'success': False, 'error': '生成器未初始化'}), 500
                 
-                # 创建临时输出目录
-                preview_dir = self.output_dir / 'preview' / str(uuid.uuid4())
-                preview_dir.mkdir(parents=True, exist_ok=True)
+                # 生成单张预览
+                task = self.task_manager.create_task(config)
                 
-                # 直接调用生成器
-                plate_type = data.get('plate_type', 'blue')
-                noise_preset = data.get('noise_preset', 'clean')
-                province = data.get('province', '')
-                custom_number = data.get('custom_number', '')
+                # 等待完成（预览是同步的）
+                timeout = 10
+                start = time.time()
+                while task.status not in ['completed', 'failed'] and time.time() - start < timeout:
+                    time.sleep(0.1)
                 
-                # 调用生成器的generate_plate方法（随机生成）
-                # generate_plate返回: img_plate, font_img, number_xy, plate_number, bg_color, is_double
-                img_plate, font_img, number_xy, plate_number, bg_color, is_double = self.plate_generator.generate_plate(enhance=False)
-                
-                # 保存图片
-                import cv2
-                output_filename = f"{plate_number}_{bg_color}_{noise_preset}.jpg"
-                output_path = preview_dir / output_filename
-                cv2.imwrite(str(output_path), img_plate)
-                
-                # 返回图片URL
-                relative_path = output_path.relative_to(self.output_dir)
-                return jsonify({
-                    'success': True,
-                    'image_url': f'/output/{relative_path}',
-                    'filename': output_filename,
-                    'plate_number': plate_number,
-                    'plate_type': bg_color,
-                    'is_double': is_double
-                })
+                if task.status == 'completed' and task.results:
+                    # 返回图片URL
+                    filepath = Path(task.results[0])
+                    relative_path = filepath.relative_to(self.output_dir)
+                    return jsonify({
+                        'success': True,
+                        'image_url': f'/output/{relative_path}',
+                        'filename': filepath.name
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': task.error or '生成超时'
+                    }), 500
                     
             except Exception as e:
-                import traceback
-                error_detail = traceback.format_exc()
-                print(f"[API] 生成预览错误: {error_detail}")
-                return jsonify({
-                    'success': False,
-                    'error': f'生成失败: {str(e)}'
-                }), 500
+                return jsonify({'success': False, 'error': str(e)}), 500
         
         @self.app.route('/api/generate/batch', methods=['POST'])
         def api_generate_batch():
@@ -618,7 +593,6 @@ class PlateGeneratorApp:
                 'assets': [asdict(a) for a in filtered[start:end]]
             })
         
-        @self.app.route('/api/stats')
         @self.app.route('/api/assets/stats')
         def api_assets_stats():
             """获取资产统计"""
@@ -827,7 +801,7 @@ class PlateGeneratorApp:
                     
                     for asset in manifest.get('assets', []):
                         # 检查GLB文件是否存在
-                        glb_name = f"{asset['plate_number']}_{asset['plate_type']}_{asset.get('noise_preset', 'medium')}_{asset['index']:04d}.glb"
+                        glb_name = f"{asset['plate_number']}_{asset['index']:04d}.glb"
                         glb_path = self.output_dir / "pbr" / "gltf" / glb_name
                         
                         # 获取尺寸信息

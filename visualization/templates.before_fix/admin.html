@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车牌生成器管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #4a90d9;
+            --primary-dark: #357abd;
+            --success: #52c41a;
+            --warning: #faad14;
+            --danger: #ff4d4f;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-hover: #1f3460;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border: #2d3748;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-header h1 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header h1::before {
+            content: '🚗';
+            font-size: 24px;
+        }
+        
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active {
+            background: var(--bg-hover);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        
+        .nav-item .icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            margin-left: 240px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            margin-bottom: 30px;
+        }
+        
+        .page-header h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            color: var(--text-secondary);
+        }
+        
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card .icon.blue { background: rgba(74, 144, 217, 0.2); }
+        .stat-card .icon.green { background: rgba(82, 196, 26, 0.2); }
+        .stat-card .icon.yellow { background: rgba(250, 173, 20, 0.2); }
+        .stat-card .icon.red { background: rgba(255, 77, 79, 0.2); }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .stat-card .label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* 快捷操作 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .action-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .action-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .action-card .action-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+        
+        .action-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .action-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        /* 最近任务 */
+        .section-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-header h3 {
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-body {
+            padding: 20px 24px;
+        }
+        
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        
+        .task-item:hover {
+            background: var(--bg-hover);
+        }
+        
+        .task-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .task-status.completed { background: var(--success); }
+        .task-status.running { background: var(--warning); animation: pulse 1.5s infinite; }
+        .task-status.pending { background: var(--text-secondary); }
+        .task-status.failed { background: var(--danger); }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-info .task-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .task-info .task-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .task-progress {
+            width: 120px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-bar .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-align: right;
+        }
+        
+        /* 系统状态 */
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+        
+        .status-dot.offline { background: var(--danger); }
+        
+        .status-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .status-value {
+            font-size: 13px;
+            margin-left: auto;
+        }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>车牌生成器</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item active">
+                <span class="icon">📊</span>
+                <span>控制台</span>
+            </a>
+            <a href="/generate" class="nav-item">
+                <span class="icon">🎨</span>
+                <span>生成车牌</span>
+            </a>
+            <a href="/assets" class="nav-item">
+                <span class="icon">📁</span>
+                <span>资产管理</span>
+            </a>
+            <a href="/export" class="nav-item">
+                <span class="icon">📦</span>
+                <span>数据集导出</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div>Chinese License Plate Generator</div>
+            <div>v2.0.0</div>
+        </div>
+    </aside>
+    
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="page-header">
+            <h2>控制台</h2>
+            <p>车牌生成器管理系统 - 程序化内容生成</p>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="icon blue">📋</div>
+                <div class="value" id="totalAssets">-</div>
+                <div class="label">总资产数</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon green">✅</div>
+                <div class="value" id="completedTasks">-</div>
+                <div class="label">已完成任务</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon yellow">⏳</div>
+                <div class="value" id="runningTasks">-</div>
+                <div class="label">进行中任务</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon red">💾</div>
+                <div class="value" id="totalSize">-</div>
+                <div class="label">总文件大小</div>
+            </div>
+        </div>
+        
+        <!-- 快捷操作 -->
+        <div class="quick-actions">
+            <a href="/generate" class="action-card">
+                <div class="action-icon">🎨</div>
+                <h3>生成新车牌</h3>
+                <p>自定义车牌类型、数量和噪声效果，支持实时预览和批量生成</p>
+            </a>
+            <a href="/assets" class="action-card">
+                <div class="action-icon">📁</div>
+                <h3>管理资产</h3>
+                <p>浏览、筛选和管理已生成的车牌资产，支持批量操作</p>
+            </a>
+            <a href="/export" class="action-card">
+                <div class="action-icon">📦</div>
+                <h3>导出数据集</h3>
+                <p>将资产导出为 DINO、KITTI、USD 等标准格式</p>
+            </a>
+        </div>
+        
+        <!-- 最近任务 -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3>📋 最近任务</h3>
+                <a href="/generate" class="btn btn-ghost">查看全部</a>
+            </div>
+            <div class="section-body">
+                <div class="task-list" id="taskList">
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暂无任务记录</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 系统状态 -->
+        <div class="section-card">
+            <div class="section-header">
+                <h3>⚙️ 系统状态</h3>
+                <button class="btn btn-ghost" onclick="refreshStatus()">刷新</button>
+            </div>
+            <div class="section-body">
+                <div class="system-status" id="systemStatus">
+                    <div class="status-item">
+                        <span class="status-dot" id="generatorStatus"></span>
+                        <span class="status-label">车牌生成器</span>
+                        <span class="status-value" id="generatorStatusText">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-dot" id="noiseStatus"></span>
+                        <span class="status-label">噪声生成器</span>
+                        <span class="status-value" id="noiseStatusText">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-dot"></span>
+                        <span class="status-label">运行平台</span>
+                        <span class="status-value" id="platformText">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-dot"></span>
+                        <span class="status-label">Python版本</span>
+                        <span class="status-value" id="pythonVersion">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // 加载数据
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadTasks();
+            loadSystemStatus();
+            
+            // 定时刷新
+            setInterval(loadTasks, 5000);
+        });
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/assets/stats');
+                const stats = await response.json();
+                
+                document.getElementById('totalAssets').textContent = stats.total;
+                document.getElementById('totalSize').textContent = stats.total_size_mb + ' MB';
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/generate/tasks');
+                const data = await response.json();
+                
+                const tasks = data.tasks || [];
+                const completed = tasks.filter(t => t.status === 'completed').length;
+                const running = tasks.filter(t => t.status === 'running').length;
+                
+                document.getElementById('completedTasks').textContent = completed;
+                document.getElementById('runningTasks').textContent = running;
+                
+                const taskList = document.getElementById('taskList');
+                
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <p>暂无任务记录</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                taskList.innerHTML = tasks.slice(0, 5).map(task => `
+                    <div class="task-item">
+                        <div class="task-status ${task.status}"></div>
+                        <div class="task-info">
+                            <div class="task-name">任务 #${task.task_id}</div>
+                            <div class="task-meta">${task.plate_type} · ${task.noise_preset} · ${task.total} 张</div>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${(task.progress / task.total) * 100}%"></div>
+                            </div>
+                            <div class="progress-text">${task.progress}/${task.total}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/system/status');
+                const status = await response.json();
+                
+                // 生成器状态
+                const genStatus = document.getElementById('generatorStatus');
+                const genText = document.getElementById('generatorStatusText');
+                if (status.generator_available) {
+                    genStatus.classList.remove('offline');
+                    genText.textContent = '正常';
+                } else {
+                    genStatus.classList.add('offline');
+                    genText.textContent = '未就绪';
+                }
+                
+                // 噪声生成器状态
+                const noiseStatus = document.getElementById('noiseStatus');
+                const noiseText = document.getElementById('noiseStatusText');
+                if (status.noise_generator_available) {
+                    noiseStatus.classList.remove('offline');
+                    noiseText.textContent = '正常';
+                } else {
+                    noiseStatus.classList.add('offline');
+                    noiseText.textContent = '未就绪';
+                }
+                
+                document.getElementById('platformText').textContent = status.platform;
+                document.getElementById('pythonVersion').textContent = status.python_version;
+                
+            } catch (error) {
+                console.error('加载系统状态失败:', error);
+            }
+        }
+        
+        function refreshStatus() {
+            loadStats();
+            loadTasks();
+            loadSystemStatus();
+        }
+    </script>
+</body>
+</html>

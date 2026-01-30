@@ -62,7 +62,8 @@ class GLTFExporter:
         is_double: bool,
         pbr_textures: Dict[str, Path],
         output_name: Optional[str] = None,
-        embed_textures: bool = True
+        embed_textures: bool = True,
+        thickness: float = 0.003  # 默认3mm
     ) -> Tuple[Path, Path]:
         """
         导出车牌为 GLTF 和 GLB 格式
@@ -92,7 +93,8 @@ class GLTFExporter:
             width=width,
             height=height,
             pbr_textures=pbr_textures,
-            embed_textures=embed_textures
+            embed_textures=embed_textures,
+            thickness=thickness
         )
         
         # 保存 GLTF
@@ -113,40 +115,92 @@ class GLTFExporter:
         width: float,
         height: float,
         pbr_textures: Dict[str, Path],
-        embed_textures: bool = False
+        embed_textures: bool = False,
+        thickness: float = 0.003
     ) -> Dict[str, Any]:
         """创建 GLTF JSON 结构"""
         
         # 顶点数据
         half_w = width / 2
         half_h = height / 2
+        z_front = thickness / 2
+        z_back = -thickness / 2
         
-        # 顶点位置 (4个角点)
-        positions = [
-            -half_w, -half_h, 0,  # 左下
-            half_w, -half_h, 0,   # 右下
-            half_w, half_h, 0,    # 右上
-            -half_w, half_h, 0,   # 左上
+        # 定义立方体的8个顶点 (前4个为正面，后4个为背面)
+        # 正面: 0:左下, 1:右下, 2:右上, 3:左上
+        # 背面: 4:左下, 5:右下, 6:右上, 7:左上
+        
+        # 为了处理UV和法线，我们需要为每个面复制顶点
+        # 6个面 * 4个顶点 = 24个顶点
+        
+        # 1. 正面 (Z+)
+        p_front = [
+            -half_w, -half_h, z_front,  # 0
+            half_w, -half_h, z_front,   # 1
+            half_w, half_h, z_front,    # 2
+            -half_w, half_h, z_front    # 3
         ]
+        n_front = [0, 0, 1] * 4
+        uv_front = [0, 1, 1, 1, 1, 0, 0, 0]
         
-        # 法线 (朝向 +Z)
-        normals = [
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
-            0, 0, 1,
+        # 2. 背面 (Z-)
+        p_back = [
+            half_w, -half_h, z_back,    # 4 (注意顺序以保持法线向外)
+            -half_w, -half_h, z_back,   # 5
+            -half_w, half_h, z_back,    # 6
+            half_w, half_h, z_back      # 7
         ]
+        n_back = [0, 0, -1] * 4
+        uv_back = [0, 1, 1, 1, 1, 0, 0, 0] # 背面也映射完整UV
         
-        # UV 坐标
-        texcoords = [
-            0, 1,  # 左下 (注意 GLTF UV 原点在左下)
-            1, 1,  # 右下
-            1, 0,  # 右上
-            0, 0,  # 左上
+        # 3. 顶面 (Y+)
+        p_top = [
+            -half_w, half_h, z_front,   # 3
+            half_w, half_h, z_front,    # 2
+            half_w, half_h, z_back,     # 6
+            -half_w, half_h, z_back     # 7
         ]
+        n_top = [0, 1, 0] * 4
+        uv_edge = [0, 0, 0, 0, 0, 0, 0, 0] # 边缘使用边缘色
         
-        # 索引 (两个三角形)
-        indices = [0, 1, 2, 0, 2, 3]
+        # 4. 底面 (Y-)
+        p_bottom = [
+            -half_w, -half_h, z_back,   # 5
+            half_w, -half_h, z_back,    # 4
+            half_w, -half_h, z_front,   # 1
+            -half_w, -half_h, z_front   # 0
+        ]
+        n_bottom = [0, -1, 0] * 4
+        
+        # 5. 右面 (X+)
+        p_right = [
+            half_w, -half_h, z_front,   # 1
+            half_w, -half_h, z_back,    # 4
+            half_w, half_h, z_back,     # 7
+            half_w, half_h, z_front     # 2
+        ]
+        n_right = [1, 0, 0] * 4
+        
+        # 6. 左面 (X-)
+        p_left = [
+            -half_w, -half_h, z_back,   # 5
+            -half_w, -half_h, z_front,  # 0
+            -half_w, half_h, z_front,   # 3
+            -half_w, half_h, z_back     # 6
+        ]
+        n_left = [-1, 0, 0] * 4
+        
+        # 合并所有数据
+        positions = p_front + p_back + p_top + p_bottom + p_right + p_left
+        normals = n_front + n_back + n_top + n_bottom + n_right + n_left
+        texcoords = uv_front + uv_back + uv_edge + uv_edge + uv_edge + uv_edge
+        
+        # 生成索引 (每个面2个三角形)
+        indices = []
+        for i in range(6):
+            base = i * 4
+            # 0, 1, 2 和 0, 2, 3
+            indices.extend([base, base+1, base+2, base, base+2, base+3])
         
         # 将数据转换为二进制
         positions_bytes = struct.pack(f'{len(positions)}f', *positions)
@@ -220,23 +274,23 @@ class GLTFExporter:
                 {
                     "bufferView": 1,
                     "componentType": 5126,  # FLOAT
-                    "count": 4,
+                    "count": len(positions) // 3,
                     "type": "VEC3",
-                    "min": [-half_w, -half_h, 0],
-                    "max": [half_w, half_h, 0]
+                    "min": [-half_w, -half_h, z_back],
+                    "max": [half_w, half_h, z_front]
                 },
                 # 法线
                 {
                     "bufferView": 2,
                     "componentType": 5126,
-                    "count": 4,
+                    "count": len(normals) // 3,
                     "type": "VEC3"
                 },
                 # UV
                 {
                     "bufferView": 3,
                     "componentType": 5126,
-                    "count": 4,
+                    "count": len(texcoords) // 2,
                     "type": "VEC2"
                 }
             ],

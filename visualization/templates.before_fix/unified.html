@@ -1,0 +1,4837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车牌生成器 - 统一管理界面</title>
+    <style>
+        /* 基础样式 */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+        }
+        
+        /* 顶部导航栏 */
+        .unified-header {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .unified-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        /* 标签页导航 */
+        .unified-tabs {
+            background: white;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 0 40px;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .tab-btn {
+            padding: 15px 0;
+            border: none;
+            background: none;
+            color: #666;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .tab-btn:hover {
+            color: #1890ff;
+        }
+        
+        .tab-btn.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+        
+        /* 页面内容容器 */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .unified-header, .unified-tabs {
+                padding: 15px 20px;
+            }
+            
+            .unified-tabs {
+                overflow-x: auto;
+                gap: 15px;
+            }
+        }
+
+        /* DASHBOARD 页面样式 */
+        #tab-dashboard {
+
+        #tab-dashboard * {
+        #tab-dashboard     margin: 0;
+        #tab-dashboard     padding: 0;
+        #tab-dashboard     box-sizing: border-box;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard :root {
+        #tab-dashboard     --primary-color: #1890ff;
+        #tab-dashboard     --success-color: #52c41a;
+        #tab-dashboard     --warning-color: #faad14;
+        #tab-dashboard     --error-color: #ff4d4f;
+        #tab-dashboard     --bg-color: #f0f2f5;
+        #tab-dashboard     --card-bg: #ffffff;
+        #tab-dashboard     --text-color: #333333;
+        #tab-dashboard     --text-secondary: #666666;
+        #tab-dashboard     --border-color: #e8e8e8;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard body {
+        #tab-dashboard     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        #tab-dashboard     background-color: var(--bg-color);
+        #tab-dashboard     color: var(--text-color);
+        #tab-dashboard     line-height: 1.6;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .header {
+        #tab-dashboard     background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+        #tab-dashboard     color: white;
+        #tab-dashboard     padding: 20px 40px;
+        #tab-dashboard     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .header h1 {
+        #tab-dashboard     font-size: 24px;
+        #tab-dashboard     font-weight: 600;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .header p {
+        #tab-dashboard     opacity: 0.85;
+        #tab-dashboard     margin-top: 5px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .nav {
+        #tab-dashboard     background: var(--card-bg);
+        #tab-dashboard     padding: 0 40px;
+        #tab-dashboard     border-bottom: 1px solid var(--border-color);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .nav ul {
+        #tab-dashboard     list-style: none;
+        #tab-dashboard     display: flex;
+        #tab-dashboard     gap: 30px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .nav a {
+        #tab-dashboard     display: block;
+        #tab-dashboard     padding: 15px 0;
+        #tab-dashboard     color: var(--text-secondary);
+        #tab-dashboard     text-decoration: none;
+        #tab-dashboard     border-bottom: 2px solid transparent;
+        #tab-dashboard     transition: all 0.3s;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .nav a:hover, .nav a.active {
+        #tab-dashboard     color: var(--primary-color);
+        #tab-dashboard     border-bottom-color: var(--primary-color);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .container {
+        #tab-dashboard     max-width: 1400px;
+        #tab-dashboard     margin: 0 auto;
+        #tab-dashboard     padding: 30px 40px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .stats-grid {
+        #tab-dashboard     display: grid;
+        #tab-dashboard     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        #tab-dashboard     gap: 20px;
+        #tab-dashboard     margin-bottom: 30px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .stat-card {
+        #tab-dashboard     background: var(--card-bg);
+        #tab-dashboard     border-radius: 8px;
+        #tab-dashboard     padding: 24px;
+        #tab-dashboard     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #tab-dashboard     transition: transform 0.3s, box-shadow 0.3s;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .stat-card:hover {
+        #tab-dashboard     transform: translateY(-2px);
+        #tab-dashboard     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .stat-card .icon {
+        #tab-dashboard     width: 48px;
+        #tab-dashboard     height: 48px;
+        #tab-dashboard     border-radius: 8px;
+        #tab-dashboard     display: flex;
+        #tab-dashboard     align-items: center;
+        #tab-dashboard     justify-content: center;
+        #tab-dashboard     font-size: 24px;
+        #tab-dashboard     margin-bottom: 16px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .stat-card .icon.blue { background: rgba(24, 144, 255, 0.1); color: var(--primary-color); }
+        #tab-dashboard .stat-card .icon.green { background: rgba(82, 196, 26, 0.1); color: var(--success-color); }
+        #tab-dashboard .stat-card .icon.yellow { background: rgba(250, 173, 20, 0.1); color: var(--warning-color); }
+        #tab-dashboard .stat-card .icon.red { background: rgba(255, 77, 79, 0.1); color: var(--error-color); }
+        #tab-dashboard 
+        #tab-dashboard .stat-card .value {
+        #tab-dashboard     font-size: 32px;
+        #tab-dashboard     font-weight: 600;
+        #tab-dashboard     color: var(--text-color);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .stat-card .label {
+        #tab-dashboard     color: var(--text-secondary);
+        #tab-dashboard     margin-top: 4px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .charts-grid {
+        #tab-dashboard     display: grid;
+        #tab-dashboard     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        #tab-dashboard     gap: 20px;
+        #tab-dashboard     margin-bottom: 30px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .chart-card {
+        #tab-dashboard     background: var(--card-bg);
+        #tab-dashboard     border-radius: 8px;
+        #tab-dashboard     padding: 24px;
+        #tab-dashboard     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .chart-card h3 {
+        #tab-dashboard     margin-bottom: 20px;
+        #tab-dashboard     font-size: 16px;
+        #tab-dashboard     color: var(--text-color);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .chart-container {
+        #tab-dashboard     height: 250px;
+        #tab-dashboard     position: relative;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .bar-chart {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     align-items: flex-end;
+        #tab-dashboard     justify-content: space-around;
+        #tab-dashboard     height: 200px;
+        #tab-dashboard     padding: 20px 0;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .bar-item {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     flex-direction: column;
+        #tab-dashboard     align-items: center;
+        #tab-dashboard     flex: 1;
+        #tab-dashboard     max-width: 80px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .bar {
+        #tab-dashboard     width: 40px;
+        #tab-dashboard     background: linear-gradient(180deg, var(--primary-color) 0%, #40a9ff 100%);
+        #tab-dashboard     border-radius: 4px 4px 0 0;
+        #tab-dashboard     transition: height 0.5s ease;
+        #tab-dashboard     min-height: 4px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .bar-label {
+        #tab-dashboard     margin-top: 8px;
+        #tab-dashboard     font-size: 12px;
+        #tab-dashboard     color: var(--text-secondary);
+        #tab-dashboard     text-align: center;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .bar-value {
+        #tab-dashboard     font-size: 14px;
+        #tab-dashboard     font-weight: 600;
+        #tab-dashboard     margin-bottom: 4px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .pie-chart {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     align-items: center;
+        #tab-dashboard     justify-content: center;
+        #tab-dashboard     gap: 40px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .pie-visual {
+        #tab-dashboard     width: 150px;
+        #tab-dashboard     height: 150px;
+        #tab-dashboard     border-radius: 50%;
+        #tab-dashboard     position: relative;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .pie-legend {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     flex-direction: column;
+        #tab-dashboard     gap: 12px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .legend-item {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     align-items: center;
+        #tab-dashboard     gap: 8px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .legend-color {
+        #tab-dashboard     width: 12px;
+        #tab-dashboard     height: 12px;
+        #tab-dashboard     border-radius: 2px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .recent-section {
+        #tab-dashboard     background: var(--card-bg);
+        #tab-dashboard     border-radius: 8px;
+        #tab-dashboard     padding: 24px;
+        #tab-dashboard     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .recent-section h3 {
+        #tab-dashboard     margin-bottom: 20px;
+        #tab-dashboard     font-size: 16px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .plates-preview {
+        #tab-dashboard     display: grid;
+        #tab-dashboard     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        #tab-dashboard     gap: 16px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .plate-thumb {
+        #tab-dashboard     aspect-ratio: 4/1;
+        #tab-dashboard     background: #f5f5f5;
+        #tab-dashboard     border-radius: 4px;
+        #tab-dashboard     overflow: hidden;
+        #tab-dashboard     cursor: pointer;
+        #tab-dashboard     transition: transform 0.3s;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .plate-thumb:hover {
+        #tab-dashboard     transform: scale(1.05);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .plate-thumb img {
+        #tab-dashboard     width: 100%;
+        #tab-dashboard     height: 100%;
+        #tab-dashboard     object-fit: contain;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .system-info {
+        #tab-dashboard     background: var(--card-bg);
+        #tab-dashboard     border-radius: 8px;
+        #tab-dashboard     padding: 24px;
+        #tab-dashboard     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #tab-dashboard     margin-top: 20px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .system-info h3 {
+        #tab-dashboard     margin-bottom: 16px;
+        #tab-dashboard     font-size: 16px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .info-grid {
+        #tab-dashboard     display: grid;
+        #tab-dashboard     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        #tab-dashboard     gap: 16px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .info-item {
+        #tab-dashboard     padding: 12px;
+        #tab-dashboard     background: var(--bg-color);
+        #tab-dashboard     border-radius: 4px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .info-item .label {
+        #tab-dashboard     font-size: 12px;
+        #tab-dashboard     color: var(--text-secondary);
+        #tab-dashboard     margin-bottom: 4px;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .info-item .value {
+        #tab-dashboard     font-size: 14px;
+        #tab-dashboard     font-weight: 500;
+        #tab-dashboard     word-break: break-all;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .loading {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     align-items: center;
+        #tab-dashboard     justify-content: center;
+        #tab-dashboard     height: 200px;
+        #tab-dashboard     color: var(--text-secondary);
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .spinner {
+        #tab-dashboard     width: 40px;
+        #tab-dashboard     height: 40px;
+        #tab-dashboard     border: 3px solid var(--border-color);
+        #tab-dashboard     border-top-color: var(--primary-color);
+        #tab-dashboard     border-radius: 50%;
+        #tab-dashboard     animation: spin 1s linear infinite;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard @keyframes spin {
+        #tab-dashboard     to { transform: rotate(360deg); }
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .btn {
+        #tab-dashboard     display: inline-flex;
+        #tab-dashboard     align-items: center;
+        #tab-dashboard     gap: 8px;
+        #tab-dashboard     padding: 8px 16px;
+        #tab-dashboard     border: none;
+        #tab-dashboard     border-radius: 4px;
+        #tab-dashboard     cursor: pointer;
+        #tab-dashboard     font-size: 14px;
+        #tab-dashboard     transition: all 0.3s;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .btn-primary {
+        #tab-dashboard     background: var(--primary-color);
+        #tab-dashboard     color: white;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .btn-primary:hover {
+        #tab-dashboard     background: #40a9ff;
+        #tab-dashboard }
+        #tab-dashboard 
+        #tab-dashboard .actions {
+        #tab-dashboard     display: flex;
+        #tab-dashboard     gap: 12px;
+        #tab-dashboard     margin-bottom: 20px;
+        #tab-dashboard }
+            }
+
+        /* GENERATE 页面样式 */
+        #tab-generate {
+
+        #tab-generate * { margin: 0; padding: 0; box-sizing: border-box; }
+        #tab-generate 
+        #tab-generate :root {
+        #tab-generate     --primary: #4a90d9;
+        #tab-generate     --primary-dark: #357abd;
+        #tab-generate     --success: #52c41a;
+        #tab-generate     --warning: #faad14;
+        #tab-generate     --danger: #ff4d4f;
+        #tab-generate     --bg-dark: #1a1a2e;
+        #tab-generate     --bg-card: #16213e;
+        #tab-generate     --bg-hover: #1f3460;
+        #tab-generate     --text-primary: #ffffff;
+        #tab-generate     --text-secondary: #a0aec0;
+        #tab-generate     --border: #2d3748;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate body {
+        #tab-generate     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     color: var(--text-primary);
+        #tab-generate     min-height: 100vh;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 侧边栏 */
+        #tab-generate .sidebar {
+        #tab-generate     position: fixed;
+        #tab-generate     left: 0;
+        #tab-generate     top: 0;
+        #tab-generate     width: 240px;
+        #tab-generate     height: 100vh;
+        #tab-generate     background: var(--bg-card);
+        #tab-generate     border-right: 1px solid var(--border);
+        #tab-generate     display: flex;
+        #tab-generate     flex-direction: column;
+        #tab-generate     z-index: 100;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .sidebar-header {
+        #tab-generate     padding: 20px;
+        #tab-generate     border-bottom: 1px solid var(--border);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .sidebar-header h1 {
+        #tab-generate     font-size: 18px;
+        #tab-generate     display: flex;
+        #tab-generate     align-items: center;
+        #tab-generate     gap: 10px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .sidebar-header h1::before { content: '🚗'; font-size: 24px; }
+        #tab-generate 
+        #tab-generate .sidebar-nav { flex: 1; padding: 20px 0; }
+        #tab-generate 
+        #tab-generate .nav-item {
+        #tab-generate     display: flex;
+        #tab-generate     align-items: center;
+        #tab-generate     gap: 12px;
+        #tab-generate     padding: 12px 20px;
+        #tab-generate     color: var(--text-secondary);
+        #tab-generate     text-decoration: none;
+        #tab-generate     transition: all 0.3s;
+        #tab-generate     border-left: 3px solid transparent;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-generate .nav-item.active { background: var(--bg-hover); color: var(--primary); border-left-color: var(--primary); }
+        #tab-generate .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        #tab-generate 
+        #tab-generate .sidebar-footer {
+        #tab-generate     padding: 20px;
+        #tab-generate     border-top: 1px solid var(--border);
+        #tab-generate     font-size: 12px;
+        #tab-generate     color: var(--text-secondary);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 主内容区 */
+        #tab-generate .main-content {
+        #tab-generate     margin-left: 240px;
+        #tab-generate     padding: 30px;
+        #tab-generate     min-height: 100vh;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .page-header { margin-bottom: 30px; }
+        #tab-generate .page-header h2 { font-size: 28px; margin-bottom: 8px; }
+        #tab-generate .page-header p { color: var(--text-secondary); }
+        #tab-generate 
+        #tab-generate /* 生成面板布局 */
+        #tab-generate .generate-layout {
+        #tab-generate     display: grid;
+        #tab-generate     grid-template-columns: 1fr 400px;
+        #tab-generate     gap: 30px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate @media (max-width: 1200px) {
+        #tab-generate     .generate-layout { grid-template-columns: 1fr; }
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 配置面板 */
+        #tab-generate .config-panel {
+        #tab-generate     background: var(--bg-card);
+        #tab-generate     border-radius: 12px;
+        #tab-generate     border: 1px solid var(--border);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .panel-header {
+        #tab-generate     padding: 20px 24px;
+        #tab-generate     border-bottom: 1px solid var(--border);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .panel-header h3 {
+        #tab-generate     font-size: 16px;
+        #tab-generate     display: flex;
+        #tab-generate     align-items: center;
+        #tab-generate     gap: 10px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .panel-body { padding: 24px; }
+        #tab-generate 
+        #tab-generate /* 表单组 */
+        #tab-generate .form-group { margin-bottom: 24px; }
+        #tab-generate .form-label {
+        #tab-generate     display: block;
+        #tab-generate     font-size: 14px;
+        #tab-generate     font-weight: 500;
+        #tab-generate     margin-bottom: 10px;
+        #tab-generate     color: var(--text-secondary);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 车牌类型选择 */
+        #tab-generate .plate-type-grid {
+        #tab-generate     display: grid;
+        #tab-generate     grid-template-columns: repeat(3, 1fr);
+        #tab-generate     gap: 12px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .plate-type-item {
+        #tab-generate     padding: 16px 12px;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     border: 2px solid var(--border);
+        #tab-generate     border-radius: 10px;
+        #tab-generate     cursor: pointer;
+        #tab-generate     transition: all 0.3s;
+        #tab-generate     text-align: center;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .plate-type-item:hover { border-color: var(--primary); }
+        #tab-generate .plate-type-item.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        #tab-generate 
+        #tab-generate .plate-type-item .color-bar {
+        #tab-generate     width: 60px;
+        #tab-generate     height: 24px;
+        #tab-generate     border-radius: 4px;
+        #tab-generate     margin: 0 auto 10px;
+        #tab-generate     border: 1px solid rgba(255,255,255,0.2);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .plate-type-item .name { font-size: 13px; font-weight: 500; }
+        #tab-generate .plate-type-item .desc { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        #tab-generate 
+        #tab-generate /* 噪声预设 */
+        #tab-generate .noise-presets {
+        #tab-generate     display: flex;
+        #tab-generate     flex-wrap: wrap;
+        #tab-generate     gap: 10px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .noise-preset-item {
+        #tab-generate     padding: 10px 16px;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     border: 2px solid var(--border);
+        #tab-generate     border-radius: 8px;
+        #tab-generate     cursor: pointer;
+        #tab-generate     transition: all 0.3s;
+        #tab-generate     font-size: 13px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .noise-preset-item:hover { border-color: var(--primary); }
+        #tab-generate .noise-preset-item.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        #tab-generate 
+        #tab-generate /* 数量滑块 */
+        #tab-generate .count-slider {
+        #tab-generate     display: flex;
+        #tab-generate     align-items: center;
+        #tab-generate     gap: 16px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .count-slider input[type="range"] {
+        #tab-generate     flex: 1;
+        #tab-generate     height: 6px;
+        #tab-generate     background: var(--border);
+        #tab-generate     border-radius: 3px;
+        #tab-generate     outline: none;
+        #tab-generate     -webkit-appearance: none;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .count-slider input[type="range"]::-webkit-slider-thumb {
+        #tab-generate     -webkit-appearance: none;
+        #tab-generate     width: 18px;
+        #tab-generate     height: 18px;
+        #tab-generate     background: var(--primary);
+        #tab-generate     border-radius: 50%;
+        #tab-generate     cursor: pointer;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .count-value {
+        #tab-generate     min-width: 60px;
+        #tab-generate     padding: 8px 12px;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     border: 1px solid var(--border);
+        #tab-generate     border-radius: 6px;
+        #tab-generate     text-align: center;
+        #tab-generate     font-weight: 600;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 输入框 */
+        #tab-generate .input-field {
+        #tab-generate     width: 100%;
+        #tab-generate     padding: 12px 16px;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     border: 1px solid var(--border);
+        #tab-generate     border-radius: 8px;
+        #tab-generate     color: var(--text-primary);
+        #tab-generate     font-size: 14px;
+        #tab-generate     outline: none;
+        #tab-generate     transition: border-color 0.3s;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .input-field:focus { border-color: var(--primary); }
+        #tab-generate .input-field::placeholder { color: var(--text-secondary); }
+        #tab-generate 
+        #tab-generate /* 按钮 */
+        #tab-generate .btn {
+        #tab-generate     display: inline-flex;
+        #tab-generate     align-items: center;
+        #tab-generate     justify-content: center;
+        #tab-generate     gap: 8px;
+        #tab-generate     padding: 12px 24px;
+        #tab-generate     border: none;
+        #tab-generate     border-radius: 8px;
+        #tab-generate     font-size: 14px;
+        #tab-generate     font-weight: 500;
+        #tab-generate     cursor: pointer;
+        #tab-generate     transition: all 0.3s;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .btn-primary { background: var(--primary); color: white; }
+        #tab-generate .btn-primary:hover { background: var(--primary-dark); }
+        #tab-generate .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        #tab-generate 
+        #tab-generate .btn-success { background: var(--success); color: white; }
+        #tab-generate .btn-success:hover { background: #45a815; }
+        #tab-generate 
+        #tab-generate .btn-ghost {
+        #tab-generate     background: transparent;
+        #tab-generate     color: var(--text-secondary);
+        #tab-generate     border: 1px solid var(--border);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-generate 
+        #tab-generate .btn-block { width: 100%; }
+        #tab-generate 
+        #tab-generate .action-buttons {
+        #tab-generate     display: flex;
+        #tab-generate     gap: 12px;
+        #tab-generate     margin-top: 24px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 预览面板 */
+        #tab-generate .preview-panel {
+        #tab-generate     background: var(--bg-card);
+        #tab-generate     border-radius: 12px;
+        #tab-generate     border: 1px solid var(--border);
+        #tab-generate     position: sticky;
+        #tab-generate     top: 30px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .preview-area {
+        #tab-generate     padding: 24px;
+        #tab-generate     min-height: 200px;
+        #tab-generate     display: flex;
+        #tab-generate     align-items: center;
+        #tab-generate     justify-content: center;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     border-radius: 0 0 12px 12px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .preview-placeholder {
+        #tab-generate     text-align: center;
+        #tab-generate     color: var(--text-secondary);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .preview-placeholder .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        #tab-generate 
+        #tab-generate .preview-image {
+        #tab-generate     max-width: 100%;
+        #tab-generate     border-radius: 8px;
+        #tab-generate     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 任务列表 */
+        #tab-generate .task-section { margin-top: 30px; }
+        #tab-generate 
+        #tab-generate .task-list { display: flex; flex-direction: column; gap: 12px; }
+        #tab-generate 
+        #tab-generate .task-item {
+        #tab-generate     display: flex;
+        #tab-generate     align-items: center;
+        #tab-generate     gap: 16px;
+        #tab-generate     padding: 16px;
+        #tab-generate     background: var(--bg-dark);
+        #tab-generate     border-radius: 8px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .task-status {
+        #tab-generate     width: 10px;
+        #tab-generate     height: 10px;
+        #tab-generate     border-radius: 50%;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .task-status.completed { background: var(--success); }
+        #tab-generate .task-status.running { background: var(--warning); animation: pulse 1.5s infinite; }
+        #tab-generate .task-status.pending { background: var(--text-secondary); }
+        #tab-generate .task-status.failed { background: var(--danger); }
+        #tab-generate 
+        #tab-generate @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #tab-generate 
+        #tab-generate .task-info { flex: 1; }
+        #tab-generate .task-info .task-name { font-weight: 500; margin-bottom: 4px; }
+        #tab-generate .task-info .task-meta { font-size: 12px; color: var(--text-secondary); }
+        #tab-generate 
+        #tab-generate .task-progress { width: 150px; }
+        #tab-generate 
+        #tab-generate .progress-bar {
+        #tab-generate     height: 6px;
+        #tab-generate     background: var(--border);
+        #tab-generate     border-radius: 3px;
+        #tab-generate     overflow: hidden;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .progress-bar .progress {
+        #tab-generate     height: 100%;
+        #tab-generate     background: linear-gradient(90deg, var(--primary), var(--success));
+        #tab-generate     border-radius: 3px;
+        #tab-generate     transition: width 0.3s;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .progress-text {
+        #tab-generate     font-size: 12px;
+        #tab-generate     color: var(--text-secondary);
+        #tab-generate     margin-top: 4px;
+        #tab-generate     text-align: right;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .task-actions { display: flex; gap: 8px; }
+        #tab-generate 
+        #tab-generate .btn-icon {
+        #tab-generate     width: 32px;
+        #tab-generate     height: 32px;
+        #tab-generate     padding: 0;
+        #tab-generate     border-radius: 6px;
+        #tab-generate     font-size: 14px;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate /* 加载动画 */
+        #tab-generate .loading-spinner {
+        #tab-generate     width: 40px;
+        #tab-generate     height: 40px;
+        #tab-generate     border: 3px solid var(--border);
+        #tab-generate     border-top-color: var(--primary);
+        #tab-generate     border-radius: 50%;
+        #tab-generate     animation: spin 1s linear infinite;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate @keyframes spin { to { transform: rotate(360deg); } }
+        #tab-generate 
+        #tab-generate /* 消息提示 */
+        #tab-generate .toast {
+        #tab-generate     position: fixed;
+        #tab-generate     bottom: 30px;
+        #tab-generate     right: 30px;
+        #tab-generate     padding: 16px 24px;
+        #tab-generate     background: var(--bg-card);
+        #tab-generate     border: 1px solid var(--border);
+        #tab-generate     border-radius: 8px;
+        #tab-generate     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        #tab-generate     z-index: 1000;
+        #tab-generate     animation: slideIn 0.3s ease;
+        #tab-generate }
+        #tab-generate 
+        #tab-generate .toast.success { border-left: 4px solid var(--success); }
+        #tab-generate .toast.error { border-left: 4px solid var(--danger); }
+        #tab-generate 
+        #tab-generate @keyframes slideIn {
+        #tab-generate     from { transform: translateX(100%); opacity: 0; }
+        #tab-generate     to { transform: translateX(0); opacity: 1; }
+        #tab-generate }
+            }
+
+        /* VIEWER3D 页面样式 */
+        #tab-viewer3d {
+
+        #tab-viewer3d * { margin: 0; padding: 0; box-sizing: border-box; }
+        #tab-viewer3d body {
+        #tab-viewer3d     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        #tab-viewer3d     background: #0f0f1a;
+        #tab-viewer3d     color: #e0e0e0;
+        #tab-viewer3d     min-height: 100vh;
+        #tab-viewer3d }
+        #tab-viewer3d .header {
+        #tab-viewer3d     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        #tab-viewer3d     padding: 1rem 2rem;
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     justify-content: space-between;
+        #tab-viewer3d     align-items: center;
+        #tab-viewer3d     border-bottom: 1px solid #333;
+        #tab-viewer3d }
+        #tab-viewer3d .logo {
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     align-items: center;
+        #tab-viewer3d     gap: 0.5rem;
+        #tab-viewer3d     font-size: 1.2rem;
+        #tab-viewer3d     font-weight: 600;
+        #tab-viewer3d     color: #4ade80;
+        #tab-viewer3d     text-decoration: none;
+        #tab-viewer3d }
+        #tab-viewer3d .nav { display: flex; gap: 1.5rem; }
+        #tab-viewer3d .nav a {
+        #tab-viewer3d     color: #888;
+        #tab-viewer3d     text-decoration: none;
+        #tab-viewer3d     padding: 0.5rem 1rem;
+        #tab-viewer3d     border-radius: 6px;
+        #tab-viewer3d     transition: all 0.2s;
+        #tab-viewer3d }
+        #tab-viewer3d .nav a:hover, .nav a.active {
+        #tab-viewer3d     color: #fff;
+        #tab-viewer3d     background: rgba(74, 222, 128, 0.1);
+        #tab-viewer3d }
+        #tab-viewer3d .main-container {
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     height: calc(100vh - 60px);
+        #tab-viewer3d }
+        #tab-viewer3d .sidebar {
+        #tab-viewer3d     width: 250px;
+        #tab-viewer3d     background: #1a1a2e;
+        #tab-viewer3d     border-right: 1px solid #333;
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     flex-direction: column;
+        #tab-viewer3d }
+        #tab-viewer3d .sidebar-header {
+        #tab-viewer3d     padding: 1rem;
+        #tab-viewer3d     border-bottom: 1px solid #333;
+        #tab-viewer3d }
+        #tab-viewer3d .sidebar-header h3 {
+        #tab-viewer3d     font-size: 0.9rem;
+        #tab-viewer3d     color: #888;
+        #tab-viewer3d     margin-bottom: 0.5rem;
+        #tab-viewer3d }
+        #tab-viewer3d .model-count { font-size: 0.8rem; color: #666; }
+        #tab-viewer3d .model-list {
+        #tab-viewer3d     flex: 1;
+        #tab-viewer3d     overflow-y: auto;
+        #tab-viewer3d     padding: 0.5rem;
+        #tab-viewer3d }
+        #tab-viewer3d .model-item {
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     align-items: center;
+        #tab-viewer3d     gap: 0.75rem;
+        #tab-viewer3d     padding: 0.5rem;
+        #tab-viewer3d     border-radius: 8px;
+        #tab-viewer3d     cursor: pointer;
+        #tab-viewer3d     transition: all 0.2s;
+        #tab-viewer3d     margin-bottom: 0.25rem;
+        #tab-viewer3d }
+        #tab-viewer3d .model-item:hover { background: rgba(255, 255, 255, 0.05); }
+        #tab-viewer3d .model-item.active {
+        #tab-viewer3d     background: rgba(74, 222, 128, 0.15);
+        #tab-viewer3d     border: 1px solid rgba(74, 222, 128, 0.3);
+        #tab-viewer3d }
+        #tab-viewer3d .model-thumb {
+        #tab-viewer3d     width: 50px;
+        #tab-viewer3d     height: 25px;
+        #tab-viewer3d     object-fit: cover;
+        #tab-viewer3d     border-radius: 4px;
+        #tab-viewer3d     background: #333;
+        #tab-viewer3d }
+        #tab-viewer3d .model-info { flex: 1; min-width: 0; }
+        #tab-viewer3d .model-name {
+        #tab-viewer3d     font-size: 0.85rem;
+        #tab-viewer3d     font-weight: 500;
+        #tab-viewer3d     white-space: nowrap;
+        #tab-viewer3d     overflow: hidden;
+        #tab-viewer3d     text-overflow: ellipsis;
+        #tab-viewer3d }
+        #tab-viewer3d .model-type { font-size: 0.7rem; color: #666; }
+        #tab-viewer3d .viewer-container {
+        #tab-viewer3d     flex: 1;
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     flex-direction: column;
+        #tab-viewer3d     position: relative;
+        #tab-viewer3d }
+        #tab-viewer3d #canvas-container {
+        #tab-viewer3d     flex: 1;
+        #tab-viewer3d     position: relative;
+        #tab-viewer3d     background: #1a1a2e;
+        #tab-viewer3d }
+        #tab-viewer3d #canvas-container canvas { display: block; width: 100%; height: 100%; }
+        #tab-viewer3d .loading {
+        #tab-viewer3d     position: absolute;
+        #tab-viewer3d     top: 50%;
+        #tab-viewer3d     left: 50%;
+        #tab-viewer3d     transform: translate(-50%, -50%);
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     flex-direction: column;
+        #tab-viewer3d     align-items: center;
+        #tab-viewer3d     gap: 1rem;
+        #tab-viewer3d     z-index: 10;
+        #tab-viewer3d }
+        #tab-viewer3d .loading.hidden { display: none; }
+        #tab-viewer3d .spinner {
+        #tab-viewer3d     width: 40px;
+        #tab-viewer3d     height: 40px;
+        #tab-viewer3d     border: 3px solid #333;
+        #tab-viewer3d     border-top-color: #4ade80;
+        #tab-viewer3d     border-radius: 50%;
+        #tab-viewer3d     animation: spin 1s linear infinite;
+        #tab-viewer3d }
+        #tab-viewer3d @keyframes spin { to { transform: rotate(360deg); } }
+        #tab-viewer3d .toolbar {
+        #tab-viewer3d     position: absolute;
+        #tab-viewer3d     bottom: 1rem;
+        #tab-viewer3d     left: 50%;
+        #tab-viewer3d     transform: translateX(-50%);
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     gap: 0.5rem;
+        #tab-viewer3d     background: rgba(26, 26, 46, 0.9);
+        #tab-viewer3d     padding: 0.5rem;
+        #tab-viewer3d     border-radius: 8px;
+        #tab-viewer3d     border: 1px solid #333;
+        #tab-viewer3d     z-index: 5;
+        #tab-viewer3d }
+        #tab-viewer3d .toolbar-group {
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     gap: 0.25rem;
+        #tab-viewer3d     padding-right: 0.5rem;
+        #tab-viewer3d     border-right: 1px solid #333;
+        #tab-viewer3d }
+        #tab-viewer3d .toolbar-group:last-child { border-right: none; padding-right: 0; }
+        #tab-viewer3d .toolbar button {
+        #tab-viewer3d     background: transparent;
+        #tab-viewer3d     border: none;
+        #tab-viewer3d     color: #888;
+        #tab-viewer3d     padding: 0.5rem;
+        #tab-viewer3d     border-radius: 4px;
+        #tab-viewer3d     cursor: pointer;
+        #tab-viewer3d     transition: all 0.2s;
+        #tab-viewer3d     font-size: 0.8rem;
+        #tab-viewer3d }
+        #tab-viewer3d .toolbar button:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        #tab-viewer3d .toolbar button.active { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        #tab-viewer3d .info-panel {
+        #tab-viewer3d     width: 280px;
+        #tab-viewer3d     background: #1a1a2e;
+        #tab-viewer3d     border-left: 1px solid #333;
+        #tab-viewer3d     padding: 1rem;
+        #tab-viewer3d     overflow-y: auto;
+        #tab-viewer3d }
+        #tab-viewer3d .info-panel h4 {
+        #tab-viewer3d     font-size: 0.9rem;
+        #tab-viewer3d     color: #888;
+        #tab-viewer3d     margin-bottom: 1rem;
+        #tab-viewer3d     padding-bottom: 0.5rem;
+        #tab-viewer3d     border-bottom: 1px solid #333;
+        #tab-viewer3d }
+        #tab-viewer3d .info-row {
+        #tab-viewer3d     display: flex;
+        #tab-viewer3d     justify-content: space-between;
+        #tab-viewer3d     margin-bottom: 0.75rem;
+        #tab-viewer3d     font-size: 0.85rem;
+        #tab-viewer3d }
+        #tab-viewer3d .info-label { color: #666; }
+        #tab-viewer3d .info-value { color: #e0e0e0; font-weight: 500; }
+        #tab-viewer3d .texture-preview { margin-top: 1.5rem; }
+        #tab-viewer3d .texture-preview h5 { font-size: 0.8rem; color: #888; margin-bottom: 0.75rem; }
+        #tab-viewer3d .texture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        #tab-viewer3d .texture-item { text-align: center; }
+        #tab-viewer3d .texture-item img {
+        #tab-viewer3d     width: 100%;
+        #tab-viewer3d     height: 60px;
+        #tab-viewer3d     object-fit: cover;
+        #tab-viewer3d     border-radius: 4px;
+        #tab-viewer3d     background: #333;
+        #tab-viewer3d     margin-bottom: 0.25rem;
+        #tab-viewer3d }
+        #tab-viewer3d .texture-item span { font-size: 0.7rem; color: #666; }
+        #tab-viewer3d .toolbar-label { font-size: 0.7rem; color: #666; padding: 0.5rem 0.25rem; }
+        #tab-viewer3d #debug-log {
+        #tab-viewer3d     position: fixed;
+        #tab-viewer3d     bottom: 0;
+        #tab-viewer3d     left: 0;
+        #tab-viewer3d     right: 0;
+        #tab-viewer3d     background: rgba(0,0,0,0.9);
+        #tab-viewer3d     color: #0f0;
+        #tab-viewer3d     font-family: monospace;
+        #tab-viewer3d     font-size: 11px;
+        #tab-viewer3d     padding: 10px;
+        #tab-viewer3d     max-height: 200px;
+        #tab-viewer3d     overflow-y: auto;
+        #tab-viewer3d     z-index: 1000;
+        #tab-viewer3d }
+            }
+
+        /* GALLERY 页面样式 */
+        #tab-gallery {
+
+        #tab-gallery * {
+        #tab-gallery     margin: 0;
+        #tab-gallery     padding: 0;
+        #tab-gallery     box-sizing: border-box;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery :root {
+        #tab-gallery     --primary-color: #1890ff;
+        #tab-gallery     --success-color: #52c41a;
+        #tab-gallery     --warning-color: #faad14;
+        #tab-gallery     --error-color: #ff4d4f;
+        #tab-gallery     --bg-color: #f0f2f5;
+        #tab-gallery     --card-bg: #ffffff;
+        #tab-gallery     --text-color: #333333;
+        #tab-gallery     --text-secondary: #666666;
+        #tab-gallery     --border-color: #e8e8e8;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery body {
+        #tab-gallery     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        #tab-gallery     background-color: var(--bg-color);
+        #tab-gallery     color: var(--text-color);
+        #tab-gallery     line-height: 1.6;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .header {
+        #tab-gallery     background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+        #tab-gallery     color: white;
+        #tab-gallery     padding: 20px 40px;
+        #tab-gallery     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .header h1 {
+        #tab-gallery     font-size: 24px;
+        #tab-gallery     font-weight: 600;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .header p {
+        #tab-gallery     opacity: 0.85;
+        #tab-gallery     margin-top: 5px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .nav {
+        #tab-gallery     background: var(--card-bg);
+        #tab-gallery     padding: 0 40px;
+        #tab-gallery     border-bottom: 1px solid var(--border-color);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .nav ul {
+        #tab-gallery     list-style: none;
+        #tab-gallery     display: flex;
+        #tab-gallery     gap: 30px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .nav a {
+        #tab-gallery     display: block;
+        #tab-gallery     padding: 15px 0;
+        #tab-gallery     color: var(--text-secondary);
+        #tab-gallery     text-decoration: none;
+        #tab-gallery     border-bottom: 2px solid transparent;
+        #tab-gallery     transition: all 0.3s;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .nav a:hover, .nav a.active {
+        #tab-gallery     color: var(--primary-color);
+        #tab-gallery     border-bottom-color: var(--primary-color);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .container {
+        #tab-gallery     max-width: 1400px;
+        #tab-gallery     margin: 0 auto;
+        #tab-gallery     padding: 30px 40px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .filters {
+        #tab-gallery     background: var(--card-bg);
+        #tab-gallery     border-radius: 8px;
+        #tab-gallery     padding: 20px;
+        #tab-gallery     margin-bottom: 20px;
+        #tab-gallery     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .filters-row {
+        #tab-gallery     display: flex;
+        #tab-gallery     flex-wrap: wrap;
+        #tab-gallery     gap: 16px;
+        #tab-gallery     align-items: center;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .filter-group {
+        #tab-gallery     display: flex;
+        #tab-gallery     flex-direction: column;
+        #tab-gallery     gap: 4px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .filter-group label {
+        #tab-gallery     font-size: 12px;
+        #tab-gallery     color: var(--text-secondary);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .filter-group input,
+        #tab-gallery .filter-group select {
+        #tab-gallery     padding: 8px 12px;
+        #tab-gallery     border: 1px solid var(--border-color);
+        #tab-gallery     border-radius: 4px;
+        #tab-gallery     font-size: 14px;
+        #tab-gallery     min-width: 150px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .filter-group input:focus,
+        #tab-gallery .filter-group select:focus {
+        #tab-gallery     outline: none;
+        #tab-gallery     border-color: var(--primary-color);
+        #tab-gallery     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .btn {
+        #tab-gallery     display: inline-flex;
+        #tab-gallery     align-items: center;
+        #tab-gallery     gap: 8px;
+        #tab-gallery     padding: 8px 16px;
+        #tab-gallery     border: none;
+        #tab-gallery     border-radius: 4px;
+        #tab-gallery     cursor: pointer;
+        #tab-gallery     font-size: 14px;
+        #tab-gallery     transition: all 0.3s;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .btn-primary {
+        #tab-gallery     background: var(--primary-color);
+        #tab-gallery     color: white;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .btn-primary:hover {
+        #tab-gallery     background: #40a9ff;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .btn-secondary {
+        #tab-gallery     background: var(--bg-color);
+        #tab-gallery     color: var(--text-color);
+        #tab-gallery     border: 1px solid var(--border-color);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .btn-secondary:hover {
+        #tab-gallery     border-color: var(--primary-color);
+        #tab-gallery     color: var(--primary-color);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .results-info {
+        #tab-gallery     display: flex;
+        #tab-gallery     justify-content: space-between;
+        #tab-gallery     align-items: center;
+        #tab-gallery     margin-bottom: 16px;
+        #tab-gallery     color: var(--text-secondary);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .gallery-grid {
+        #tab-gallery     display: grid;
+        #tab-gallery     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        #tab-gallery     gap: 20px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-card {
+        #tab-gallery     background: var(--card-bg);
+        #tab-gallery     border-radius: 8px;
+        #tab-gallery     overflow: hidden;
+        #tab-gallery     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #tab-gallery     transition: transform 0.3s, box-shadow 0.3s;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-card:hover {
+        #tab-gallery     transform: translateY(-4px);
+        #tab-gallery     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-image {
+        #tab-gallery     width: 100%;
+        #tab-gallery     aspect-ratio: 4/1;
+        #tab-gallery     background: #f5f5f5;
+        #tab-gallery     display: flex;
+        #tab-gallery     align-items: center;
+        #tab-gallery     justify-content: center;
+        #tab-gallery     cursor: pointer;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-image img {
+        #tab-gallery     max-width: 100%;
+        #tab-gallery     max-height: 100%;
+        #tab-gallery     object-fit: contain;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-info {
+        #tab-gallery     padding: 16px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-number {
+        #tab-gallery     font-size: 18px;
+        #tab-gallery     font-weight: 600;
+        #tab-gallery     margin-bottom: 8px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .plate-meta {
+        #tab-gallery     display: flex;
+        #tab-gallery     flex-wrap: wrap;
+        #tab-gallery     gap: 8px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .tag {
+        #tab-gallery     display: inline-block;
+        #tab-gallery     padding: 2px 8px;
+        #tab-gallery     border-radius: 4px;
+        #tab-gallery     font-size: 12px;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .tag-category {
+        #tab-gallery     background: rgba(24, 144, 255, 0.1);
+        #tab-gallery     color: var(--primary-color);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .tag-color {
+        #tab-gallery     color: white;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .tag-layer {
+        #tab-gallery     background: rgba(82, 196, 26, 0.1);
+        #tab-gallery     color: var(--success-color);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .lightbox {
+        #tab-gallery     position: fixed;
+        #tab-gallery     top: 0;
+        #tab-gallery     left: 0;
+        #tab-gallery     width: 100%;
+        #tab-gallery     height: 100%;
+        #tab-gallery     background: rgba(0,0,0,0.9);
+        #tab-gallery     display: none;
+        #tab-gallery     align-items: center;
+        #tab-gallery     justify-content: center;
+        #tab-gallery     z-index: 1000;
+        #tab-gallery     cursor: pointer;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .lightbox.active {
+        #tab-gallery     display: flex;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .lightbox img {
+        #tab-gallery     max-width: 90%;
+        #tab-gallery     max-height: 90%;
+        #tab-gallery     object-fit: contain;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .lightbox-close {
+        #tab-gallery     position: absolute;
+        #tab-gallery     top: 20px;
+        #tab-gallery     right: 20px;
+        #tab-gallery     color: white;
+        #tab-gallery     font-size: 32px;
+        #tab-gallery     cursor: pointer;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .loading {
+        #tab-gallery     display: flex;
+        #tab-gallery     align-items: center;
+        #tab-gallery     justify-content: center;
+        #tab-gallery     height: 200px;
+        #tab-gallery     color: var(--text-secondary);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .spinner {
+        #tab-gallery     width: 40px;
+        #tab-gallery     height: 40px;
+        #tab-gallery     border: 3px solid var(--border-color);
+        #tab-gallery     border-top-color: var(--primary-color);
+        #tab-gallery     border-radius: 50%;
+        #tab-gallery     animation: spin 1s linear infinite;
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery @keyframes spin {
+        #tab-gallery     to { transform: rotate(360deg); }
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .empty-state {
+        #tab-gallery     text-align: center;
+        #tab-gallery     padding: 60px 20px;
+        #tab-gallery     color: var(--text-secondary);
+        #tab-gallery }
+        #tab-gallery 
+        #tab-gallery .empty-state .icon {
+        #tab-gallery     font-size: 64px;
+        #tab-gallery     margin-bottom: 16px;
+        #tab-gallery }
+            }
+
+        /* ASSETS 页面样式 */
+        #tab-assets {
+
+        #tab-assets * { margin: 0; padding: 0; box-sizing: border-box; }
+        #tab-assets 
+        #tab-assets :root {
+        #tab-assets     --primary: #4a90d9;
+        #tab-assets     --primary-dark: #357abd;
+        #tab-assets     --success: #52c41a;
+        #tab-assets     --warning: #faad14;
+        #tab-assets     --danger: #ff4d4f;
+        #tab-assets     --bg-dark: #1a1a2e;
+        #tab-assets     --bg-card: #16213e;
+        #tab-assets     --bg-hover: #1f3460;
+        #tab-assets     --text-primary: #ffffff;
+        #tab-assets     --text-secondary: #a0aec0;
+        #tab-assets     --border: #2d3748;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets body {
+        #tab-assets     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        #tab-assets     background: var(--bg-dark);
+        #tab-assets     color: var(--text-primary);
+        #tab-assets     min-height: 100vh;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets /* 侧边栏 */
+        #tab-assets .sidebar {
+        #tab-assets     position: fixed;
+        #tab-assets     left: 0;
+        #tab-assets     top: 0;
+        #tab-assets     width: 240px;
+        #tab-assets     height: 100vh;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border-right: 1px solid var(--border);
+        #tab-assets     display: flex;
+        #tab-assets     flex-direction: column;
+        #tab-assets     z-index: 100;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        #tab-assets .sidebar-header h1 { font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        #tab-assets .sidebar-header h1::before { content: '🚗'; font-size: 24px; }
+        #tab-assets .sidebar-nav { flex: 1; padding: 20px 0; }
+        #tab-assets 
+        #tab-assets .nav-item {
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     gap: 12px;
+        #tab-assets     padding: 12px 20px;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets     text-decoration: none;
+        #tab-assets     transition: all 0.3s;
+        #tab-assets     border-left: 3px solid transparent;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-assets .nav-item.active { background: var(--bg-hover); color: var(--primary); border-left-color: var(--primary); }
+        #tab-assets .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        #tab-assets 
+        #tab-assets .sidebar-footer {
+        #tab-assets     padding: 20px;
+        #tab-assets     border-top: 1px solid var(--border);
+        #tab-assets     font-size: 12px;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets }
+        #tab-assets 
+        #tab-assets /* 主内容区 */
+        #tab-assets .main-content { margin-left: 240px; padding: 30px; min-height: 100vh; }
+        #tab-assets .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+        #tab-assets .page-header h2 { font-size: 28px; margin-bottom: 8px; }
+        #tab-assets .page-header p { color: var(--text-secondary); }
+        #tab-assets 
+        #tab-assets /* 工具栏 */
+        #tab-assets .toolbar {
+        #tab-assets     display: flex;
+        #tab-assets     gap: 16px;
+        #tab-assets     margin-bottom: 24px;
+        #tab-assets     flex-wrap: wrap;
+        #tab-assets     align-items: center;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .search-box {
+        #tab-assets     flex: 1;
+        #tab-assets     min-width: 200px;
+        #tab-assets     max-width: 400px;
+        #tab-assets     position: relative;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .search-box input {
+        #tab-assets     width: 100%;
+        #tab-assets     padding: 10px 16px 10px 40px;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 8px;
+        #tab-assets     color: var(--text-primary);
+        #tab-assets     font-size: 14px;
+        #tab-assets     outline: none;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .search-box input:focus { border-color: var(--primary); }
+        #tab-assets .search-box::before {
+        #tab-assets     content: '🔍';
+        #tab-assets     position: absolute;
+        #tab-assets     left: 12px;
+        #tab-assets     top: 50%;
+        #tab-assets     transform: translateY(-50%);
+        #tab-assets     font-size: 14px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .filter-group { display: flex; gap: 8px; }
+        #tab-assets 
+        #tab-assets .filter-select {
+        #tab-assets     padding: 10px 16px;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 8px;
+        #tab-assets     color: var(--text-primary);
+        #tab-assets     font-size: 14px;
+        #tab-assets     outline: none;
+        #tab-assets     cursor: pointer;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .filter-select:focus { border-color: var(--primary); }
+        #tab-assets 
+        #tab-assets .view-toggle { display: flex; gap: 4px; }
+        #tab-assets 
+        #tab-assets .view-btn {
+        #tab-assets     width: 36px;
+        #tab-assets     height: 36px;
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 6px;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets     cursor: pointer;
+        #tab-assets     transition: all 0.3s;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .view-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-assets .view-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        #tab-assets 
+        #tab-assets /* 批量操作栏 */
+        #tab-assets .bulk-actions {
+        #tab-assets     display: none;
+        #tab-assets     gap: 12px;
+        #tab-assets     padding: 16px 20px;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--primary);
+        #tab-assets     border-radius: 8px;
+        #tab-assets     margin-bottom: 24px;
+        #tab-assets     align-items: center;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .bulk-actions.show { display: flex; }
+        #tab-assets 
+        #tab-assets .bulk-actions .selected-count {
+        #tab-assets     font-weight: 500;
+        #tab-assets     color: var(--primary);
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .bulk-actions .actions { display: flex; gap: 8px; margin-left: auto; }
+        #tab-assets 
+        #tab-assets /* 按钮 */
+        #tab-assets .btn {
+        #tab-assets     display: inline-flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     gap: 8px;
+        #tab-assets     padding: 8px 16px;
+        #tab-assets     border: none;
+        #tab-assets     border-radius: 6px;
+        #tab-assets     font-size: 14px;
+        #tab-assets     cursor: pointer;
+        #tab-assets     transition: all 0.3s;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .btn-primary { background: var(--primary); color: white; }
+        #tab-assets .btn-primary:hover { background: var(--primary-dark); }
+        #tab-assets .btn-danger { background: var(--danger); color: white; }
+        #tab-assets .btn-danger:hover { background: #e04040; }
+        #tab-assets .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        #tab-assets .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-assets 
+        #tab-assets /* 网格视图 */
+        #tab-assets .assets-grid {
+        #tab-assets     display: grid;
+        #tab-assets     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        #tab-assets     gap: 20px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-card {
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 10px;
+        #tab-assets     overflow: hidden;
+        #tab-assets     transition: all 0.3s;
+        #tab-assets     position: relative;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        #tab-assets .asset-card.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        #tab-assets 
+        #tab-assets .asset-checkbox {
+        #tab-assets     position: absolute;
+        #tab-assets     top: 10px;
+        #tab-assets     left: 10px;
+        #tab-assets     width: 20px;
+        #tab-assets     height: 20px;
+        #tab-assets     background: rgba(0, 0, 0, 0.5);
+        #tab-assets     border: 2px solid white;
+        #tab-assets     border-radius: 4px;
+        #tab-assets     cursor: pointer;
+        #tab-assets     z-index: 10;
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     color: white;
+        #tab-assets     font-size: 12px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-checkbox.checked { background: var(--primary); border-color: var(--primary); }
+        #tab-assets 
+        #tab-assets .asset-menu {
+        #tab-assets     position: absolute;
+        #tab-assets     top: 10px;
+        #tab-assets     right: 10px;
+        #tab-assets     width: 28px;
+        #tab-assets     height: 28px;
+        #tab-assets     background: rgba(0, 0, 0, 0.5);
+        #tab-assets     border-radius: 4px;
+        #tab-assets     cursor: pointer;
+        #tab-assets     z-index: 10;
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     color: white;
+        #tab-assets     font-size: 14px;
+        #tab-assets     opacity: 0;
+        #tab-assets     transition: opacity 0.3s;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-card:hover .asset-menu { opacity: 1; }
+        #tab-assets 
+        #tab-assets .asset-image {
+        #tab-assets     width: 100%;
+        #tab-assets     height: 120px;
+        #tab-assets     object-fit: contain;
+        #tab-assets     background: var(--bg-dark);
+        #tab-assets     padding: 10px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-info { padding: 12px; }
+        #tab-assets .asset-name { font-size: 14px; font-weight: 500; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #tab-assets 
+        #tab-assets .asset-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        #tab-assets 
+        #tab-assets .asset-tag {
+        #tab-assets     padding: 2px 8px;
+        #tab-assets     background: var(--bg-dark);
+        #tab-assets     border-radius: 4px;
+        #tab-assets     font-size: 11px;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-tag.blue { background: rgba(24, 144, 255, 0.2); color: #1890ff; }
+        #tab-assets .asset-tag.yellow { background: rgba(250, 173, 20, 0.2); color: #faad14; }
+        #tab-assets .asset-tag.green { background: rgba(82, 196, 26, 0.2); color: #52c41a; }
+        #tab-assets .asset-tag.white { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
+        #tab-assets .asset-tag.black { background: rgba(100, 100, 100, 0.3); color: #aaaaaa; }
+        #tab-assets 
+        #tab-assets /* 列表视图 */
+        #tab-assets .assets-list { display: none; flex-direction: column; gap: 8px; }
+        #tab-assets .assets-list.active { display: flex; }
+        #tab-assets .assets-grid.hidden { display: none; }
+        #tab-assets 
+        #tab-assets .asset-row {
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     gap: 16px;
+        #tab-assets     padding: 12px 16px;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 8px;
+        #tab-assets     transition: all 0.3s;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-row:hover { border-color: var(--primary); }
+        #tab-assets .asset-row.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        #tab-assets 
+        #tab-assets .asset-row .checkbox {
+        #tab-assets     width: 20px;
+        #tab-assets     height: 20px;
+        #tab-assets     border: 2px solid var(--border);
+        #tab-assets     border-radius: 4px;
+        #tab-assets     cursor: pointer;
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     color: white;
+        #tab-assets     font-size: 12px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-row .checkbox.checked { background: var(--primary); border-color: var(--primary); }
+        #tab-assets 
+        #tab-assets .asset-row .thumbnail {
+        #tab-assets     width: 80px;
+        #tab-assets     height: 40px;
+        #tab-assets     object-fit: contain;
+        #tab-assets     background: var(--bg-dark);
+        #tab-assets     border-radius: 4px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .asset-row .info { flex: 1; }
+        #tab-assets .asset-row .info .name { font-weight: 500; margin-bottom: 4px; }
+        #tab-assets .asset-row .info .meta { font-size: 12px; color: var(--text-secondary); }
+        #tab-assets 
+        #tab-assets .asset-row .tags { display: flex; gap: 6px; }
+        #tab-assets .asset-row .size { font-size: 13px; color: var(--text-secondary); min-width: 80px; text-align: right; }
+        #tab-assets .asset-row .date { font-size: 13px; color: var(--text-secondary); min-width: 100px; }
+        #tab-assets .asset-row .actions { display: flex; gap: 8px; }
+        #tab-assets 
+        #tab-assets /* 分页 */
+        #tab-assets .pagination {
+        #tab-assets     display: flex;
+        #tab-assets     justify-content: center;
+        #tab-assets     align-items: center;
+        #tab-assets     gap: 8px;
+        #tab-assets     margin-top: 30px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .page-btn {
+        #tab-assets     width: 36px;
+        #tab-assets     height: 36px;
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 6px;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets     cursor: pointer;
+        #tab-assets     transition: all 0.3s;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .page-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-assets .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        #tab-assets .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #tab-assets 
+        #tab-assets .page-info { font-size: 14px; color: var(--text-secondary); margin: 0 16px; }
+        #tab-assets 
+        #tab-assets /* 空状态 */
+        #tab-assets .empty-state {
+        #tab-assets     text-align: center;
+        #tab-assets     padding: 60px;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .empty-state .icon { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
+        #tab-assets .empty-state p { margin-bottom: 20px; }
+        #tab-assets 
+        #tab-assets /* 详情弹窗 */
+        #tab-assets .modal-overlay {
+        #tab-assets     display: none;
+        #tab-assets     position: fixed;
+        #tab-assets     top: 0;
+        #tab-assets     left: 0;
+        #tab-assets     right: 0;
+        #tab-assets     bottom: 0;
+        #tab-assets     background: rgba(0, 0, 0, 0.7);
+        #tab-assets     z-index: 1000;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .modal-overlay.show { display: flex; }
+        #tab-assets 
+        #tab-assets .modal {
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border-radius: 12px;
+        #tab-assets     max-width: 600px;
+        #tab-assets     width: 90%;
+        #tab-assets     max-height: 90vh;
+        #tab-assets     overflow: auto;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .modal-header {
+        #tab-assets     display: flex;
+        #tab-assets     justify-content: space-between;
+        #tab-assets     align-items: center;
+        #tab-assets     padding: 20px;
+        #tab-assets     border-bottom: 1px solid var(--border);
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .modal-header h3 { font-size: 18px; }
+        #tab-assets 
+        #tab-assets .modal-close {
+        #tab-assets     width: 32px;
+        #tab-assets     height: 32px;
+        #tab-assets     display: flex;
+        #tab-assets     align-items: center;
+        #tab-assets     justify-content: center;
+        #tab-assets     background: transparent;
+        #tab-assets     border: none;
+        #tab-assets     color: var(--text-secondary);
+        #tab-assets     cursor: pointer;
+        #tab-assets     border-radius: 6px;
+        #tab-assets     font-size: 18px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+        #tab-assets 
+        #tab-assets .modal-body { padding: 20px; }
+        #tab-assets 
+        #tab-assets .detail-image {
+        #tab-assets     width: 100%;
+        #tab-assets     max-height: 200px;
+        #tab-assets     object-fit: contain;
+        #tab-assets     background: var(--bg-dark);
+        #tab-assets     border-radius: 8px;
+        #tab-assets     margin-bottom: 20px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .detail-grid {
+        #tab-assets     display: grid;
+        #tab-assets     grid-template-columns: repeat(2, 1fr);
+        #tab-assets     gap: 16px;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .detail-item { }
+        #tab-assets .detail-item .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        #tab-assets .detail-item .value { font-size: 14px; }
+        #tab-assets 
+        #tab-assets /* 消息提示 */
+        #tab-assets .toast {
+        #tab-assets     position: fixed;
+        #tab-assets     bottom: 30px;
+        #tab-assets     right: 30px;
+        #tab-assets     padding: 16px 24px;
+        #tab-assets     background: var(--bg-card);
+        #tab-assets     border: 1px solid var(--border);
+        #tab-assets     border-radius: 8px;
+        #tab-assets     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        #tab-assets     z-index: 1000;
+        #tab-assets     animation: slideIn 0.3s ease;
+        #tab-assets }
+        #tab-assets 
+        #tab-assets .toast.success { border-left: 4px solid var(--success); }
+        #tab-assets .toast.error { border-left: 4px solid var(--danger); }
+        #tab-assets 
+        #tab-assets @keyframes slideIn {
+        #tab-assets     from { transform: translateX(100%); opacity: 0; }
+        #tab-assets     to { transform: translateX(0); opacity: 1; }
+        #tab-assets }
+            }
+    </style>
+</head>
+<body>
+    <header class="unified-header">
+        <h1>🚗 车牌生成器 - 统一管理界面</h1>
+    </header>
+    
+    <nav class="unified-tabs">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('generate')">🎨 生成</button>
+        <button class="tab-btn" onclick="switchTab('viewer3d')">🎬 3D查看</button>
+        <button class="tab-btn" onclick="switchTab('gallery')">🖼️ 图库</button>
+        <button class="tab-btn" onclick="switchTab('assets')">📦 资产</button>
+    </nav>
+    
+    <main>
+        <div id="tab-dashboard" class="tab-content active">
+
+    
+    
+    
+    
+    <main class="container">
+        <div class="actions">
+            <button class="btn btn-primary" onclick="refreshData()">
+                🔄 刷新数据
+            </button>
+        </div>
+        
+        <section class="stats-grid" id="statsGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </section>
+        
+        <section class="charts-grid">
+            <div class="chart-card">
+                <h3>📊 分类分布</h3>
+                <div class="chart-container">
+                    <div class="bar-chart" id="categoryChart">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>🎨 颜色分布</h3>
+                <div class="chart-container">
+                    <div class="pie-chart" id="colorChart">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="recent-section">
+            <h3>🖼️ 最近生成的车牌</h3>
+            <div class="plates-preview" id="recentPlates">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </section>
+        
+        <section class="system-info">
+            <h3>⚙️ 系统信息</h3>
+            <div class="info-grid" id="systemInfo">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </section>
+    </main>
+    
+    <script>
+        // 颜色映射
+        const colorMap = {
+            'blue': '#1890ff',
+            'green': '#52c41a',
+            'yellow': '#faad14',
+            'white': '#d9d9d9',
+            'black': '#262626',
+            'red': '#ff4d4f',
+            'unknown': '#999999'
+        };
+        
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                renderStats(stats);
+                renderCategoryChart(stats.categories);
+                renderColorChart(stats.colors);
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        // 渲染统计卡片
+        function renderStats(stats) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = `
+                <div class="stat-card">
+                    <div class="icon blue">📋</div>
+                    <div class="value">${stats.total_plates}</div>
+                    <div class="label">总车牌数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon green">📁</div>
+                    <div class="value">${Object.keys(stats.categories).length}</div>
+                    <div class="label">分类数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon yellow">📦</div>
+                    <div class="value">${stats.total_size_mb} MB</div>
+                    <div class="label">总文件大小</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon red">🕐</div>
+                    <div class="value" style="font-size: 16px;">${stats.last_generated}</div>
+                    <div class="label">最后生成时间</div>
+                </div>
+            `;
+        }
+        
+        // 渲染分类柱状图
+        function renderCategoryChart(categories) {
+            const chart = document.getElementById('categoryChart');
+            const entries = Object.entries(categories);
+            
+            if (entries.length === 0) {
+                chart.innerHTML = '<div class="loading">暂无数据</div>';
+                return;
+            }
+            
+            const maxValue = Math.max(...entries.map(([, v]) => v));
+            
+            chart.innerHTML = entries.map(([name, value]) => `
+                <div class="bar-item">
+                    <div class="bar-value">${value}</div>
+                    <div class="bar" style="height: ${(value / maxValue) * 150}px;"></div>
+                    <div class="bar-label">${name}</div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染颜色饼图
+        function renderColorChart(colors) {
+            const chart = document.getElementById('colorChart');
+            const entries = Object.entries(colors);
+            
+            if (entries.length === 0) {
+                chart.innerHTML = '<div class="loading">暂无数据</div>';
+                return;
+            }
+            
+            const total = entries.reduce((sum, [, v]) => sum + v, 0);
+            let currentAngle = 0;
+            
+            // 生成渐变色
+            const gradients = entries.map(([name, value]) => {
+                const startAngle = currentAngle;
+                const angle = (value / total) * 360;
+                currentAngle += angle;
+                return `${colorMap[name] || '#999'} ${startAngle}deg ${currentAngle}deg`;
+            });
+            
+            chart.innerHTML = `
+                <div class="pie-visual" style="background: conic-gradient(${gradients.join(', ')});"></div>
+                <div class="pie-legend">
+                    ${entries.map(([name, value]) => `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: ${colorMap[name] || '#999'};"></div>
+                            <span>${name}: ${value} (${Math.round(value/total*100)}%)</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // 加载最近车牌
+        async function loadRecentPlates() {
+            try {
+                const response = await fetch('/api/plates');
+                const plates = await response.json();
+                renderRecentPlates(plates.slice(0, 12));
+            } catch (error) {
+                console.error('加载车牌失败:', error);
+            }
+        }
+        
+        // 渲染最近车牌
+        function renderRecentPlates(plates) {
+            const container = document.getElementById('recentPlates');
+            
+            if (plates.length === 0) {
+                container.innerHTML = '<div class="loading">暂无车牌数据</div>';
+                return;
+            }
+            
+            container.innerHTML = plates.map(plate => `
+                <div class="plate-thumb" title="${plate.plate_number}">
+                    <img src="${plate.image_url}" alt="${plate.plate_number}" 
+                         onerror="this.parentElement.style.background='#f0f0f0'">
+                </div>
+            `).join('');
+        }
+        
+        // 加载系统信息
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/api/system');
+                const info = await response.json();
+                renderSystemInfo(info);
+            } catch (error) {
+                console.error('加载系统信息失败:', error);
+            }
+        }
+        
+        // 渲染系统信息
+        function renderSystemInfo(info) {
+            const container = document.getElementById('systemInfo');
+            container.innerHTML = `
+                <div class="info-item">
+                    <div class="label">操作系统</div>
+                    <div class="value">${info.platform} ${info.platform_release}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Python版本</div>
+                    <div class="value">${info.python_version}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">项目根目录</div>
+                    <div class="value">${info.project_root}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">输出目录</div>
+                    <div class="value">${info.output_dir}</div>
+                </div>
+            `;
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            loadStats();
+            loadRecentPlates();
+            loadSystemInfo();
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+        });
+    </script>
+        </div>
+
+        <div id="tab-generate" class="tab-content">
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header"><h1>车牌生成器</h1></div>
+        
+        <div class="sidebar-footer">
+            <div>Chinese License Plate Generator</div>
+            <div>v2.0.0</div>
+        </div>
+    </aside>
+    
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="page-header">
+            <h2>生成车牌</h2>
+            <p>自定义配置并生成车牌图像，支持实时预览和批量生成</p>
+        </div>
+        
+        <div class="generate-layout">
+            <!-- 配置面板 -->
+            <div class="config-section">
+                <div class="config-panel">
+                    <div class="panel-header">
+                        <h3>⚙️ 生成配置</h3>
+                    </div>
+                    <div class="panel-body">
+                        <!-- 车牌类型 -->
+                        <div class="form-group">
+                            <label class="form-label">车牌类型</label>
+                            <div class="plate-type-grid" id="plateTypeGrid"></div>
+                        </div>
+                        
+                        <!-- 噪声预设 -->
+                        <div class="form-group">
+                            <label class="form-label">噪声效果</label>
+                            <div class="noise-presets" id="noisePresets"></div>
+                        </div>
+                        
+                        <!-- 生成数量 -->
+                        <div class="form-group">
+                            <label class="form-label">生成数量</label>
+                            <div class="count-slider">
+                                <input type="range" id="countSlider" min="1" max="100" value="10">
+                                <div class="count-value" id="countValue">10</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 省份选择 -->
+                        <div class="form-group">
+                            <label class="form-label">省份（可选，留空随机）</label>
+                            <select class="input-field" id="provinceSelect">
+                                <option value="">随机省份</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div class="action-buttons">
+                            <button class="btn btn-ghost" onclick="generatePreview()">
+                                👁️ 预览
+                            </button>
+                            <button class="btn btn-primary btn-block" onclick="startBatchGenerate()">
+                                🚀 开始生成
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 任务列表 -->
+                <div class="config-panel task-section">
+                    <div class="panel-header">
+                        <h3>📋 生成任务</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="task-list" id="taskList">
+                            <div class="preview-placeholder">
+                                <div class="icon">📭</div>
+                                <p>暂无任务</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 预览面板 -->
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <h3>👁️ 实时预览</h3>
+                </div>
+                <div class="preview-area" id="previewArea">
+                    <div class="preview-placeholder">
+                        <div class="icon">🖼️</div>
+                        <p>点击"预览"按钮生成预览图</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // 配置状态
+        const config = {
+            plateType: 'blue',
+            noisePreset: 'medium',
+            count: 10,
+            province: ''
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlateTypes();
+            loadNoisePresets();
+            loadProvinces();
+            loadTasks();
+            
+            // 数量滑块
+            const slider = document.getElementById('countSlider');
+            const countValue = document.getElementById('countValue');
+            slider.addEventListener('input', function() {
+                config.count = parseInt(this.value);
+                countValue.textContent = this.value;
+            });
+            
+            // 定时刷新任务
+            setInterval(loadTasks, 3000);
+        });
+        
+        async function loadPlateTypes() {
+            try {
+                const response = await fetch('/api/config/plate_types');
+                const data = await response.json();
+                
+                const grid = document.getElementById('plateTypeGrid');
+                grid.innerHTML = data.types.map(type => `
+                    <div class="plate-type-item ${type.id === config.plateType ? 'selected' : ''}" 
+                         onclick="selectPlateType('${type.id}')">
+                        <div class="color-bar" style="background: ${type.color}"></div>
+                        <div class="name">${type.name}</div>
+                        <div class="desc">${type.description}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载车牌类型失败:', error);
+            }
+        }
+        
+        async function loadNoisePresets() {
+            try {
+                const response = await fetch('/api/config/noise_presets');
+                const data = await response.json();
+                
+                const container = document.getElementById('noisePresets');
+                container.innerHTML = data.presets.map(preset => `
+                    <div class="noise-preset-item ${preset.id === config.noisePreset ? 'selected' : ''}"
+                         onclick="selectNoisePreset('${preset.id}')"
+                         title="${preset.description}">
+                        ${preset.name}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载噪声预设失败:', error);
+            }
+        }
+        
+        async function loadProvinces() {
+            try {
+                const response = await fetch('/api/config/provinces');
+                const data = await response.json();
+                
+                const select = document.getElementById('provinceSelect');
+                data.provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province;
+                    option.textContent = province;
+                    select.appendChild(option);
+                });
+                
+                select.addEventListener('change', function() {
+                    config.province = this.value;
+                });
+            } catch (error) {
+                console.error('加载省份失败:', error);
+            }
+        }
+        
+        function selectPlateType(typeId) {
+            config.plateType = typeId;
+            document.querySelectorAll('.plate-type-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        function selectNoisePreset(presetId) {
+            config.noisePreset = presetId;
+            document.querySelectorAll('.noise-preset-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        async function generatePreview() {
+            const previewArea = document.getElementById('previewArea');
+            previewArea.innerHTML = '<div class="loading-spinner"></div>';
+            
+            try {
+                const response = await fetch('/api/generate/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_type: config.plateType,
+                        noise_preset: config.noisePreset,
+                        province: config.province
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    previewArea.innerHTML = `
+                        <img src="${data.image_url}?t=${Date.now()}" class="preview-image" alt="预览">
+                    `;
+                } else {
+                    previewArea.innerHTML = `
+                        <div class="preview-placeholder">
+                            <div class="icon">❌</div>
+                            <p>${data.error || '生成失败'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                previewArea.innerHTML = `
+                    <div class="preview-placeholder">
+                        <div class="icon">❌</div>
+                        <p>请求失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function startBatchGenerate() {
+            try {
+                const response = await fetch('/api/generate/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_type: config.plateType,
+                        noise_preset: config.noisePreset,
+                        count: config.count,
+                        province: config.province
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`任务已创建: ${data.task_id}`, 'success');
+                    loadTasks();
+                } else {
+                    showToast(data.error || '创建任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/generate/tasks');
+                const data = await response.json();
+                
+                const taskList = document.getElementById('taskList');
+                const tasks = data.tasks || [];
+                
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `
+                        <div class="preview-placeholder">
+                            <div class="icon">📭</div>
+                            <p>暂无任务</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                taskList.innerHTML = tasks.map(task => `
+                    <div class="task-item">
+                        <div class="task-status ${task.status}"></div>
+                        <div class="task-info">
+                            <div class="task-name">任务 #${task.task_id}</div>
+                            <div class="task-meta">${task.plate_type} · ${task.noise_preset} · ${task.total} 张</div>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${(task.progress / task.total) * 100}%"></div>
+                            </div>
+                            <div class="progress-text">${task.progress}/${task.total}</div>
+                        </div>
+                        <div class="task-actions">
+                            ${task.status === 'completed' ? `
+                                <button class="btn btn-icon btn-ghost" onclick="viewTaskResults('${task.task_id}')" title="查看结果">
+                                    👁️
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function viewTaskResults(taskId) {
+            window.location.href = `/assets?task=${taskId}`;
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+        </div>
+
+        <div id="tab-viewer3d" class="tab-content">
+
+    
+    
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>3D 模型列表</h3>
+                <span class="model-count">共 <span id="model-count">0</span> 个模型</span>
+            </div>
+            <div class="model-list" id="model-list"></div>
+        </aside>
+        
+        <div class="viewer-container">
+            <div id="canvas-container">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <span id="loading-text">初始化中...</span>
+                </div>
+            </div>
+            
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <span class="toolbar-label">视图</span>
+                    <button id="btn-front" title="正面">正面</button>
+                    <button id="btn-perspective" title="透视">透视</button>
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">显示</span>
+                    <button id="btn-texture" class="active" title="贴图">贴图</button>
+                    <button id="btn-wireframe" title="线框">线框</button>
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">环境</span>
+                    <button id="btn-env-studio" class="active" title="工作室">☀️</button>
+                    <button id="btn-env-outdoor" title="户外">🌤️</button>
+                    <button id="btn-env-night" title="夜间">🌙</button>
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">操作</span>
+                    <button id="btn-reset" title="重置视角">重置</button>
+                    <button id="btn-screenshot" title="截图">📷</button>
+                </div>
+            </div>
+        </div>
+        
+        <aside class="info-panel">
+            <h4>模型信息</h4>
+            <div class="info-row">
+                <span class="info-label">车牌号</span>
+                <span class="info-value" id="info-plate-number">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">类型</span>
+                <span class="info-value" id="info-plate-type">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">尺寸</span>
+                <span class="info-value" id="info-dimensions">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">噪声等级</span>
+                <span class="info-value" id="info-noise">-</span>
+            </div>
+            
+            <div class="texture-preview">
+                <h5>PBR 贴图</h5>
+                <div class="texture-grid" id="texture-grid">
+                    <div class="texture-item">
+                        <img id="tex-basecolor" src="" alt="BaseColor">
+                        <span>BaseColor</span>
+                    </div>
+                    <div class="texture-item">
+                        <img id="tex-normal" src="" alt="Normal">
+                        <span>Normal</span>
+                    </div>
+                    <div class="texture-item">
+                        <img id="tex-roughness" src="" alt="Roughness">
+                        <span>Roughness</span>
+                    </div>
+                    <div class="texture-item">
+                        <img id="tex-metallic" src="" alt="Metallic">
+                        <span>Metallic</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+    
+    <div id="debug-log"></div>
+    
+    <!-- 使用 importmap 加载 Three.js ES6 模块 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        
+        // 调试日志
+        const debugLog = document.getElementById('debug-log');
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `[${time}] ${msg}<br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(msg);
+        }
+        
+        // 全局变量
+        let scene, camera, renderer, controls, loader;
+        let currentModel = null;
+        let models = [];
+        
+        // 更新加载状态
+        function setLoadingText(text) {
+            document.getElementById('loading-text').textContent = text;
+            log('Status: ' + text);
+        }
+        
+        // 初始化 Three.js
+        function initThreeJS() {
+            log('Initializing Three.js...');
+            setLoadingText('初始化 3D 引擎...');
+            
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            log(`Container size: ${width}x${height}`);
+            
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            
+            // 相机
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 100);
+            camera.position.set(0, 0, 1);
+            
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+            
+            // 控制器
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 0.1;
+            controls.maxDistance = 10;
+            
+            // 加载器
+            loader = new GLTFLoader();
+            
+            // 灯光
+            setupLights('studio');
+            
+            // 地面网格
+            const gridHelper = new THREE.GridHelper(2, 20, 0x444444, 0x333333);
+            gridHelper.rotation.x = Math.PI / 2;
+            gridHelper.position.z = -0.01;
+            scene.add(gridHelper);
+            
+            // 窗口大小调整
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始渲染循环
+            animate();
+            
+            log('Three.js initialized successfully');
+            return true;
+        }
+        
+        // 设置灯光
+        function setupLights(environment) {
+            // 移除现有灯光
+            scene.children
+                .filter(child => child.isLight)
+                .forEach(light => scene.remove(light));
+            
+            if (environment === 'studio') {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+                keyLight.position.set(1, 1, 2);
+                scene.add(keyLight);
+                const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                fillLight.position.set(-1, 0.5, 1);
+                scene.add(fillLight);
+                const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                backLight.position.set(0, -1, -1);
+                scene.add(backLight);
+                scene.background = new THREE.Color(0x1a1a2e);
+            } else if (environment === 'outdoor') {
+                const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.6);
+                scene.add(ambientLight);
+                const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+                sunLight.position.set(2, 3, 1);
+                scene.add(sunLight);
+                scene.background = new THREE.Color(0x87ceeb);
+            } else if (environment === 'night') {
+                const ambientLight = new THREE.AmbientLight(0x1a1a3e, 0.3);
+                scene.add(ambientLight);
+                const moonLight = new THREE.DirectionalLight(0x6666aa, 0.5);
+                moonLight.position.set(-1, 2, 1);
+                scene.add(moonLight);
+                const streetLight = new THREE.PointLight(0xffaa44, 1, 3);
+                streetLight.position.set(0.5, 0.5, 0.5);
+                scene.add(streetLight);
+                scene.background = new THREE.Color(0x0a0a1e);
+            }
+            log('Lights set to: ' + environment);
+        }
+        
+        // 窗口大小调整
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+        
+        // 渲染循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // 加载 GLB 模型
+        function loadModel(glbUrl, modelInfo) {
+            log('Loading model: ' + glbUrl);
+            document.getElementById('loading').classList.remove('hidden');
+            setLoadingText('加载模型中...');
+            
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel = null;
+            }
+            
+            loader.load(
+                glbUrl,
+                function(gltf) {
+                    log('Model loaded successfully');
+                    currentModel = gltf.scene;
+                    
+                    // 居中模型
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    currentModel.position.sub(center);
+                    
+                    scene.add(currentModel);
+                    
+                    // 调整相机
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    camera.position.set(0, 0, maxDim * 2);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
+                    
+                    updateInfoPanel(modelInfo);
+                    document.getElementById('loading').classList.add('hidden');
+                },
+                function(progress) {
+                    if (progress.total > 0) {
+                        const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                        setLoadingText(`加载中... ${percent}%`);
+                    }
+                },
+                function(error) {
+                    log('Error loading model: ' + error.message);
+                    setLoadingText('加载失败: ' + error.message);
+                    setTimeout(() => {
+                        document.getElementById('loading').classList.add('hidden');
+                    }, 3000);
+                }
+            );
+        }
+        
+        // 更新信息面板
+        function updateInfoPanel(info) {
+            document.getElementById('info-plate-number').textContent = info.plate_number || '-';
+            document.getElementById('info-plate-type').textContent = info.plate_type || '-';
+            const width = info.width_meters || 0.44;
+            const height = info.height_meters || 0.14;
+            document.getElementById('info-dimensions').textContent = 
+                (width * 100).toFixed(0) + 'cm × ' + (height * 100).toFixed(0) + 'cm';
+            document.getElementById('info-noise').textContent = info.noise_preset || '-';
+            
+            // 更新贴图预览
+            if (info.textures) {
+                const baseUrl = '/output/pbr/textures/';
+                ['basecolor', 'normal', 'roughness', 'metallic'].forEach(type => {
+                    const texPath = info.textures[type];
+                    if (texPath) {
+                        const filename = texPath.split('/').pop();
+                        document.getElementById('tex-' + type).src = baseUrl + filename;
+                    }
+                });
+            }
+        }
+        
+        // 加载模型列表
+        async function loadModelList() {
+            log('Loading model list...');
+            setLoadingText('加载模型列表...');
+            
+            try {
+                const response = await fetch('/api/models3d');
+                const data = await response.json();
+                models = data.models || [];
+                log('Loaded ' + models.length + ' models');
+                document.getElementById('model-count').textContent = models.length;
+                
+                const listContainer = document.getElementById('model-list');
+                listContainer.innerHTML = '';
+                
+                models.forEach((model, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'model-item';
+                    item.dataset.index = index;
+                    
+                    item.innerHTML = `
+                        <img class="model-thumb" src="${model.thumbnail}" alt="${model.plate_number}" onerror="this.style.display='none'">
+                        <div class="model-info">
+                            <div class="model-name">${model.plate_number}</div>
+                            <div class="model-type">${model.plate_type} · ${model.noise_preset}</div>
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        loadModel(model.glb_url, model);
+                    });
+                    
+                    listContainer.appendChild(item);
+                });
+                
+                // 自动加载第一个模型
+                if (models.length > 0 && listContainer.firstChild) {
+                    listContainer.firstChild.click();
+                } else {
+                    document.getElementById('loading').classList.add('hidden');
+                    setLoadingText('没有可用的模型');
+                }
+            } catch (error) {
+                log('Error loading model list: ' + error.message);
+                setLoadingText('加载模型列表失败');
+            }
+        }
+        
+        // 设置显示模式
+        function setDisplayMode(mode) {
+            if (!currentModel) return;
+            currentModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.wireframe = (mode === 'wireframe');
+                }
+            });
+            log('Display mode: ' + mode);
+        }
+        
+        // 控制按钮事件
+        function setupControls() {
+            document.getElementById('btn-front').addEventListener('click', () => {
+                camera.position.set(0, 0, 1);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-perspective').addEventListener('click', () => {
+                camera.position.set(0.5, 0.3, 0.8);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-texture').addEventListener('click', function() {
+                setDisplayMode('texture');
+                document.getElementById('btn-texture').classList.add('active');
+                document.getElementById('btn-wireframe').classList.remove('active');
+            });
+            
+            document.getElementById('btn-wireframe').addEventListener('click', function() {
+                setDisplayMode('wireframe');
+                document.getElementById('btn-wireframe').classList.add('active');
+                document.getElementById('btn-texture').classList.remove('active');
+            });
+            
+            document.getElementById('btn-env-studio').addEventListener('click', function() {
+                setupLights('studio');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-env-outdoor').addEventListener('click', function() {
+                setupLights('outdoor');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-env-night').addEventListener('click', function() {
+                setupLights('night');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                camera.position.set(0, 0, 1);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-screenshot').addEventListener('click', () => {
+                renderer.render(scene, camera);
+                const dataUrl = renderer.domElement.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'license_plate_3d.png';
+                link.href = dataUrl;
+                link.click();
+            });
+        }
+        
+        // 初始化
+        log('ES6 Module loaded');
+        log('THREE version: ' + THREE.REVISION);
+        
+        try {
+            initThreeJS();
+            setupControls();
+            await loadModelList();
+        } catch (error) {
+            log('Error: ' + error.message);
+            setLoadingText('初始化失败: ' + error.message);
+        }
+    </script>
+        </div>
+
+        <div id="tab-gallery" class="tab-content">
+
+    
+    
+    
+    
+    <main class="container">
+        <section class="filters">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>搜索车牌号</label>
+                    <input type="text" id="searchInput" placeholder="输入车牌号...">
+                </div>
+                
+                <div class="filter-group">
+                    <label>分类</label>
+                    <select id="categoryFilter">
+                        <option value="">全部分类</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>颜色</label>
+                    <select id="colorFilter">
+                        <option value="">全部颜色</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" style="align-self: flex-end;">
+                    <button class="btn btn-primary" onclick="applyFilters()">🔍 筛选</button>
+                </div>
+                
+                <div class="filter-group" style="align-self: flex-end;">
+                    <button class="btn btn-secondary" onclick="resetFilters()">🔄 重置</button>
+                </div>
+            </div>
+        </section>
+        
+        <div class="results-info">
+            <span id="resultsCount">加载中...</span>
+        </div>
+        
+        <section class="gallery-grid" id="galleryGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </section>
+    </main>
+    
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+    
+    <script>
+        // 颜色映射
+        const colorMap = {
+            'blue': '#1890ff',
+            'green': '#52c41a',
+            'yellow': '#faad14',
+            'white': '#d9d9d9',
+            'black': '#262626',
+            'red': '#ff4d4f',
+            'unknown': '#999999'
+        };
+        
+        const colorNames = {
+            'blue': '蓝色',
+            'green': '绿色',
+            'yellow': '黄色',
+            'white': '白色',
+            'black': '黑色',
+            'red': '红色',
+            'unknown': '未知'
+        };
+        
+        let allPlates = [];
+        
+        // 加载分类选项
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+                const select = document.getElementById('categoryFilter');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载分类失败:', error);
+            }
+        }
+        
+        // 加载颜色选项
+        async function loadColors() {
+            try {
+                const response = await fetch('/api/colors');
+                const colors = await response.json();
+                const select = document.getElementById('colorFilter');
+                colors.forEach(color => {
+                    const option = document.createElement('option');
+                    option.value = color;
+                    option.textContent = colorNames[color] || color;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载颜色失败:', error);
+            }
+        }
+        
+        // 加载车牌数据
+        async function loadPlates() {
+            try {
+                const response = await fetch('/api/plates');
+                allPlates = await response.json();
+                renderPlates(allPlates);
+            } catch (error) {
+                console.error('加载车牌失败:', error);
+                document.getElementById('galleryGrid').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">😕</div>
+                        <p>加载失败，请刷新页面重试</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 渲染车牌列表
+        function renderPlates(plates) {
+            const grid = document.getElementById('galleryGrid');
+            const count = document.getElementById('resultsCount');
+            
+            count.textContent = `共 ${plates.length} 个车牌`;
+            
+            if (plates.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="icon">📭</div>
+                        <p>没有找到符合条件的车牌</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = plates.map(plate => `
+                <div class="plate-card">
+                    <div class="plate-image" onclick="showLightbox('${plate.image_url}')">
+                        <img src="${plate.image_url}" alt="${plate.plate_number}"
+                             onerror="this.parentElement.innerHTML='<span style=\\'color:#999\\'>图片加载失败</span>'">
+                    </div>
+                    <div class="plate-info">
+                        <div class="plate-number">${plate.plate_number}</div>
+                        <div class="plate-meta">
+                            <span class="tag tag-category">${plate.category}</span>
+                            <span class="tag tag-color" style="background: ${colorMap[plate.color] || '#999'}">
+                                ${colorNames[plate.color] || plate.color}
+                            </span>
+                            <span class="tag tag-layer">${plate.is_double ? '双层' : '单层'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 应用筛选
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const color = document.getElementById('colorFilter').value;
+            
+            let filtered = allPlates;
+            
+            if (search) {
+                filtered = filtered.filter(p => 
+                    p.plate_number.toLowerCase().includes(search) ||
+                    p.filename.toLowerCase().includes(search)
+                );
+            }
+            
+            if (category) {
+                filtered = filtered.filter(p => p.category === category);
+            }
+            
+            if (color) {
+                filtered = filtered.filter(p => p.color === color);
+            }
+            
+            renderPlates(filtered);
+        }
+        
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('colorFilter').value = '';
+            renderPlates(allPlates);
+        }
+        
+        // 显示灯箱
+        function showLightbox(imageUrl) {
+            document.getElementById('lightboxImg').src = imageUrl;
+            document.getElementById('lightbox').classList.add('active');
+        }
+        
+        // 关闭灯箱
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('lightbox-close')) {
+                this.classList.remove('active');
+            }
+        });
+        
+        // 回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadColors();
+            loadPlates();
+        });
+    </script>
+        </div>
+
+        <div id="tab-assets" class="tab-content">
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header"><h1>车牌生成器</h1></div>
+        
+        <div class="sidebar-footer">
+            <div>Chinese License Plate Generator</div>
+            <div>v2.0.0</div>
+        </div>
+    </aside>
+    
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h2>资产管理</h2>
+                <p>浏览、筛选和管理已生成的车牌资产</p>
+            </div>
+            <div>
+                <span id="totalCount" style="color: var(--text-secondary); margin-right: 16px;">共 0 个资产</span>
+            </div>
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索车牌号或文件名...">
+            </div>
+            <div class="filter-group">
+                <select class="filter-select" id="typeFilter">
+                    <option value="">全部类型</option>
+                    <option value="blue">蓝色</option>
+                    <option value="yellow">黄色</option>
+                    <option value="green">绿色</option>
+                    <option value="white">白色</option>
+                    <option value="black">黑色</option>
+                </select>
+                <select class="filter-select" id="noiseFilter">
+                    <option value="">全部噪声</option>
+                    <option value="clean">无噪声</option>
+                    <option value="light">轻度</option>
+                    <option value="medium">中度</option>
+                    <option value="heavy">重度</option>
+                    <option value="random">随机</option>
+                </select>
+            </div>
+            <div class="view-toggle">
+                <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')">▦</button>
+                <button class="view-btn" id="listViewBtn" onclick="setView('list')">☰</button>
+            </div>
+            <button class="btn btn-ghost" onclick="refreshAssets()">🔄 刷新</button>
+        </div>
+        
+        <!-- 批量操作栏 -->
+        <div class="bulk-actions" id="bulkActions">
+            <span>已选择 <span class="selected-count" id="selectedCount">0</span> 个资产</span>
+            <div class="actions">
+                <button class="btn btn-ghost" onclick="clearSelection()">取消选择</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 删除</button>
+            </div>
+        </div>
+        
+        <!-- 网格视图 -->
+        <div class="assets-grid" id="assetsGrid"></div>
+        
+        <!-- 列表视图 -->
+        <div class="assets-list" id="assetsList"></div>
+        
+        <!-- 分页 -->
+        <div class="pagination" id="pagination"></div>
+    </main>
+    
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>资产详情</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 状态
+        let currentView = 'grid';
+        let currentPage = 1;
+        let perPage = 20;
+        let totalAssets = 0;
+        let selectedAssets = new Set();
+        let allAssets = [];
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAssets();
+            
+            // 搜索
+            document.getElementById('searchInput').addEventListener('input', debounce(loadAssets, 300));
+            document.getElementById('typeFilter').addEventListener('change', loadAssets);
+            document.getElementById('noiseFilter').addEventListener('change', loadAssets);
+        });
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+        
+        async function loadAssets() {
+            const search = document.getElementById('searchInput').value;
+            const type = document.getElementById('typeFilter').value;
+            const noise = document.getElementById('noiseFilter').value;
+            
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: perPage,
+                search: search,
+                color: type,
+                noise: noise
+            });
+            
+            try {
+                const response = await fetch(`/api/assets?${params}`);
+                const data = await response.json();
+                
+                allAssets = data.assets;
+                totalAssets = data.total;
+                
+                document.getElementById('totalCount').textContent = `共 ${totalAssets} 个资产`;
+                
+                renderAssets();
+                renderPagination(data.total, data.page, data.per_page);
+            } catch (error) {
+                console.error('加载资产失败:', error);
+            }
+        }
+        
+        function renderAssets() {
+            if (currentView === 'grid') {
+                renderGridView();
+            } else {
+                renderListView();
+            }
+        }
+        
+        function renderGridView() {
+            const grid = document.getElementById('assetsGrid');
+            
+            if (allAssets.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="icon">📭</div>
+                        <p>暂无资产</p>
+                        <a href="/generate" class="btn btn-primary">生成车牌</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = allAssets.map(asset => `
+                <div class="asset-card ${selectedAssets.has(asset.asset_id) ? 'selected' : ''}" 
+                     data-id="${asset.asset_id}">
+                    <div class="asset-checkbox ${selectedAssets.has(asset.asset_id) ? 'checked' : ''}"
+                         onclick="toggleSelect('${asset.asset_id}', event)">
+                        ${selectedAssets.has(asset.asset_id) ? '✓' : ''}
+                    </div>
+                    <div class="asset-menu" onclick="showAssetMenu('${asset.asset_id}', event)">⋮</div>
+                    <img src="${asset.image_url}" class="asset-image" alt="${asset.plate_number}"
+                         onclick="showDetail('${asset.asset_id}')">
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.plate_number}</div>
+                        <div class="asset-tags">
+                            <span class="asset-tag ${asset.color}">${asset.color}</span>
+                            <span class="asset-tag">${asset.noise_level}</span>
+                            ${asset.is_double ? '<span class="asset-tag">双层</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderListView() {
+            const list = document.getElementById('assetsList');
+            
+            if (allAssets.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暂无资产</p>
+                        <a href="/generate" class="btn btn-primary">生成车牌</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = allAssets.map(asset => `
+                <div class="asset-row ${selectedAssets.has(asset.asset_id) ? 'selected' : ''}"
+                     data-id="${asset.asset_id}">
+                    <div class="checkbox ${selectedAssets.has(asset.asset_id) ? 'checked' : ''}"
+                         onclick="toggleSelect('${asset.asset_id}', event)">
+                        ${selectedAssets.has(asset.asset_id) ? '✓' : ''}
+                    </div>
+                    <img src="${asset.image_url}" class="thumbnail" alt="${asset.plate_number}">
+                    <div class="info">
+                        <div class="name">${asset.plate_number}</div>
+                        <div class="meta">${asset.filename}</div>
+                    </div>
+                    <div class="tags">
+                        <span class="asset-tag ${asset.color}">${asset.color}</span>
+                        <span class="asset-tag">${asset.noise_level}</span>
+                    </div>
+                    <div class="size">${formatSize(asset.file_size)}</div>
+                    <div class="date">${formatDate(asset.created_at)}</div>
+                    <div class="actions">
+                        <button class="btn btn-ghost" onclick="showDetail('${asset.asset_id}')">👁️</button>
+                        <button class="btn btn-ghost" onclick="deleteAsset('${asset.asset_id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderPagination(total, page, perPage) {
+            const totalPages = Math.ceil(total / perPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = `
+                <button class="page-btn" onclick="goToPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹</button>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += `<span class="page-info">...</span>`;
+                }
+            }
+            
+            html += `
+                <button class="page-btn" onclick="goToPage(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>›</button>
+            `;
+            
+            pagination.innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            currentPage = page;
+            loadAssets();
+        }
+        
+        function setView(view) {
+            currentView = view;
+            
+            document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('assetsGrid').classList.toggle('hidden', view !== 'grid');
+            document.getElementById('assetsList').classList.toggle('active', view === 'list');
+            
+            renderAssets();
+        }
+        
+        function toggleSelect(assetId, event) {
+            event.stopPropagation();
+            
+            if (selectedAssets.has(assetId)) {
+                selectedAssets.delete(assetId);
+            } else {
+                selectedAssets.add(assetId);
+            }
+            
+            updateBulkActions();
+            renderAssets();
+        }
+        
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedAssets.size > 0) {
+                bulkActions.classList.add('show');
+                selectedCount.textContent = selectedAssets.size;
+            } else {
+                bulkActions.classList.remove('show');
+            }
+        }
+        
+        function clearSelection() {
+            selectedAssets.clear();
+            updateBulkActions();
+            renderAssets();
+        }
+        
+        async function deleteSelected() {
+            if (selectedAssets.size === 0) return;
+            
+            if (!confirm(`确定要删除 ${selectedAssets.size} 个资产吗？`)) return;
+            
+            try {
+                const response = await fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_ids: Array.from(selectedAssets) })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`已删除 ${data.deleted} 个资产`, 'success');
+                    selectedAssets.clear();
+                    updateBulkActions();
+                    loadAssets();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAsset(assetId) {
+            if (!confirm('确定要删除这个资产吗？')) return;
+            
+            try {
+                const response = await fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_ids: [assetId] })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('删除成功', 'success');
+                    loadAssets();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        function showDetail(assetId) {
+            const asset = allAssets.find(a => a.asset_id === assetId);
+            if (!asset) return;
+            
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('modalBody');
+            
+            body.innerHTML = `
+                <img src="${asset.image_url}" class="detail-image" alt="${asset.plate_number}">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="label">车牌号</div>
+                        <div class="value">${asset.plate_number}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">类型</div>
+                        <div class="value">${asset.plate_type}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">颜色</div>
+                        <div class="value">${asset.color}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">噪声等级</div>
+                        <div class="value">${asset.noise_level}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">尺寸</div>
+                        <div class="value">${asset.width} × ${asset.height}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">文件大小</div>
+                        <div class="value">${formatSize(asset.file_size)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">双层</div>
+                        <div class="value">${asset.is_double ? '是' : '否'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">创建时间</div>
+                        <div class="value">${formatDate(asset.created_at)}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function showAssetMenu(assetId, event) {
+            event.stopPropagation();
+            // 简化处理，直接显示详情
+            showDetail(assetId);
+        }
+        
+        function refreshAssets() {
+            loadAssets();
+            showToast('刷新成功', 'success');
+        }
+        
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // 点击弹窗外部关闭
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+        </div>
+
+    </main>
+    
+    <script>
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签页
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有按钮的active状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的标签页
+            const targetTab = document.getElementById('tab-' + tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // 激活对应按钮（查找包含对应文本的按钮）
+            const tabTexts = {
+                'dashboard': 'Dashboard',
+                'generate': '生成',
+                'viewer3d': '3D查看',
+                'gallery': '图库',
+                'assets': '资产'
+            };
+            const targetText = tabTexts[tabName];
+            if (targetText) {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    if (btn.textContent.includes(targetText)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            // 触发页面特定的初始化函数
+            if (window['init_' + tabName]) {
+                window['init_' + tabName]();
+            }
+        }
+
+        // DASHBOARD 页面脚本
+        (function() {
+
+        // 颜色映射
+        const colorMap = {
+            'blue': '#1890ff',
+            'green': '#52c41a',
+            'yellow': '#faad14',
+            'white': '#d9d9d9',
+            'black': '#262626',
+            'red': '#ff4d4f',
+            'unknown': '#999999'
+        };
+        
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                renderStats(stats);
+                renderCategoryChart(stats.categories);
+                renderColorChart(stats.colors);
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        // 渲染统计卡片
+        function renderStats(stats) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = `
+                <div class="stat-card">
+                    <div class="icon blue">📋</div>
+                    <div class="value">${stats.total_plates}</div>
+                    <div class="label">总车牌数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon green">📁</div>
+                    <div class="value">${Object.keys(stats.categories).length}</div>
+                    <div class="label">分类数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon yellow">📦</div>
+                    <div class="value">${stats.total_size_mb} MB</div>
+                    <div class="label">总文件大小</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon red">🕐</div>
+                    <div class="value" style="font-size: 16px;">${stats.last_generated}</div>
+                    <div class="label">最后生成时间</div>
+                </div>
+            `;
+        }
+        
+        // 渲染分类柱状图
+        function renderCategoryChart(categories) {
+            const chart = document.getElementById('categoryChart');
+            const entries = Object.entries(categories);
+            
+            if (entries.length === 0) {
+                chart.innerHTML = '<div class="loading">暂无数据</div>';
+                return;
+            }
+            
+            const maxValue = Math.max(...entries.map(([, v]) => v));
+            
+            chart.innerHTML = entries.map(([name, value]) => `
+                <div class="bar-item">
+                    <div class="bar-value">${value}</div>
+                    <div class="bar" style="height: ${(value / maxValue) * 150}px;"></div>
+                    <div class="bar-label">${name}</div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染颜色饼图
+        function renderColorChart(colors) {
+            const chart = document.getElementById('colorChart');
+            const entries = Object.entries(colors);
+            
+            if (entries.length === 0) {
+                chart.innerHTML = '<div class="loading">暂无数据</div>';
+                return;
+            }
+            
+            const total = entries.reduce((sum, [, v]) => sum + v, 0);
+            let currentAngle = 0;
+            
+            // 生成渐变色
+            const gradients = entries.map(([name, value]) => {
+                const startAngle = currentAngle;
+                const angle = (value / total) * 360;
+                currentAngle += angle;
+                return `${colorMap[name] || '#999'} ${startAngle}deg ${currentAngle}deg`;
+            });
+            
+            chart.innerHTML = `
+                <div class="pie-visual" style="background: conic-gradient(${gradients.join(', ')});"></div>
+                <div class="pie-legend">
+                    ${entries.map(([name, value]) => `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: ${colorMap[name] || '#999'};"></div>
+                            <span>${name}: ${value} (${Math.round(value/total*100)}%)</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // 加载最近车牌
+        async function loadRecentPlates() {
+            try {
+                const response = await fetch('/api/plates');
+                const plates = await response.json();
+                renderRecentPlates(plates.slice(0, 12));
+            } catch (error) {
+                console.error('加载车牌失败:', error);
+            }
+        }
+        
+        // 渲染最近车牌
+        function renderRecentPlates(plates) {
+            const container = document.getElementById('recentPlates');
+            
+            if (plates.length === 0) {
+                container.innerHTML = '<div class="loading">暂无车牌数据</div>';
+                return;
+            }
+            
+            container.innerHTML = plates.map(plate => `
+                <div class="plate-thumb" title="${plate.plate_number}">
+                    <img src="${plate.image_url}" alt="${plate.plate_number}" 
+                         onerror="this.parentElement.style.background='#f0f0f0'">
+                </div>
+            `).join('');
+        }
+        
+        // 加载系统信息
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/api/system');
+                const info = await response.json();
+                renderSystemInfo(info);
+            } catch (error) {
+                console.error('加载系统信息失败:', error);
+            }
+        }
+        
+        // 渲染系统信息
+        function renderSystemInfo(info) {
+            const container = document.getElementById('systemInfo');
+            container.innerHTML = `
+                <div class="info-item">
+                    <div class="label">操作系统</div>
+                    <div class="value">${info.platform} ${info.platform_release}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Python版本</div>
+                    <div class="value">${info.python_version}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">项目根目录</div>
+                    <div class="value">${info.project_root}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">输出目录</div>
+                    <div class="value">${info.output_dir}</div>
+                </div>
+            `;
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            loadStats();
+            loadRecentPlates();
+            loadSystemInfo();
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+        });
+            })();
+
+
+        // GENERATE 页面脚本
+        (function() {
+
+        // 配置状态
+        const config = {
+            plateType: 'blue',
+            noisePreset: 'medium',
+            count: 10,
+            province: ''
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlateTypes();
+            loadNoisePresets();
+            loadProvinces();
+            loadTasks();
+            
+            // 数量滑块
+            const slider = document.getElementById('countSlider');
+            const countValue = document.getElementById('countValue');
+            slider.addEventListener('input', function() {
+                config.count = parseInt(this.value);
+                countValue.textContent = this.value;
+            });
+            
+            // 定时刷新任务
+            setInterval(loadTasks, 3000);
+        });
+        
+        async function loadPlateTypes() {
+            try {
+                const response = await fetch('/api/config/plate_types');
+                const data = await response.json();
+                
+                const grid = document.getElementById('plateTypeGrid');
+                grid.innerHTML = data.types.map(type => `
+                    <div class="plate-type-item ${type.id === config.plateType ? 'selected' : ''}" 
+                         onclick="selectPlateType('${type.id}')">
+                        <div class="color-bar" style="background: ${type.color}"></div>
+                        <div class="name">${type.name}</div>
+                        <div class="desc">${type.description}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载车牌类型失败:', error);
+            }
+        }
+        
+        async function loadNoisePresets() {
+            try {
+                const response = await fetch('/api/config/noise_presets');
+                const data = await response.json();
+                
+                const container = document.getElementById('noisePresets');
+                container.innerHTML = data.presets.map(preset => `
+                    <div class="noise-preset-item ${preset.id === config.noisePreset ? 'selected' : ''}"
+                         onclick="selectNoisePreset('${preset.id}')"
+                         title="${preset.description}">
+                        ${preset.name}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载噪声预设失败:', error);
+            }
+        }
+        
+        async function loadProvinces() {
+            try {
+                const response = await fetch('/api/config/provinces');
+                const data = await response.json();
+                
+                const select = document.getElementById('provinceSelect');
+                data.provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province;
+                    option.textContent = province;
+                    select.appendChild(option);
+                });
+                
+                select.addEventListener('change', function() {
+                    config.province = this.value;
+                });
+            } catch (error) {
+                console.error('加载省份失败:', error);
+            }
+        }
+        
+        function selectPlateType(typeId) {
+            config.plateType = typeId;
+            document.querySelectorAll('.plate-type-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        function selectNoisePreset(presetId) {
+            config.noisePreset = presetId;
+            document.querySelectorAll('.noise-preset-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        async function generatePreview() {
+            const previewArea = document.getElementById('previewArea');
+            previewArea.innerHTML = '<div class="loading-spinner"></div>';
+            
+            try {
+                const response = await fetch('/api/generate/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_type: config.plateType,
+                        noise_preset: config.noisePreset,
+                        province: config.province
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    previewArea.innerHTML = `
+                        <img src="${data.image_url}?t=${Date.now()}" class="preview-image" alt="预览">
+                    `;
+                } else {
+                    previewArea.innerHTML = `
+                        <div class="preview-placeholder">
+                            <div class="icon">❌</div>
+                            <p>${data.error || '生成失败'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                previewArea.innerHTML = `
+                    <div class="preview-placeholder">
+                        <div class="icon">❌</div>
+                        <p>请求失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function startBatchGenerate() {
+            try {
+                const response = await fetch('/api/generate/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_type: config.plateType,
+                        noise_preset: config.noisePreset,
+                        count: config.count,
+                        province: config.province
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`任务已创建: ${data.task_id}`, 'success');
+                    loadTasks();
+                } else {
+                    showToast(data.error || '创建任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/generate/tasks');
+                const data = await response.json();
+                
+                const taskList = document.getElementById('taskList');
+                const tasks = data.tasks || [];
+                
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `
+                        <div class="preview-placeholder">
+                            <div class="icon">📭</div>
+                            <p>暂无任务</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                taskList.innerHTML = tasks.map(task => `
+                    <div class="task-item">
+                        <div class="task-status ${task.status}"></div>
+                        <div class="task-info">
+                            <div class="task-name">任务 #${task.task_id}</div>
+                            <div class="task-meta">${task.plate_type} · ${task.noise_preset} · ${task.total} 张</div>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${(task.progress / task.total) * 100}%"></div>
+                            </div>
+                            <div class="progress-text">${task.progress}/${task.total}</div>
+                        </div>
+                        <div class="task-actions">
+                            ${task.status === 'completed' ? `
+                                <button class="btn btn-icon btn-ghost" onclick="viewTaskResults('${task.task_id}')" title="查看结果">
+                                    👁️
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function viewTaskResults(taskId) {
+            window.location.href = `/assets?task=${taskId}`;
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+            })();
+
+
+        // VIEWER3D 页面脚本
+        (function() {
+
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+            })();
+
+        (function() {
+
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        
+        // 调试日志
+        const debugLog = document.getElementById('debug-log');
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `[${time}] ${msg}<br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(msg);
+        }
+        
+        // 全局变量
+        let scene, camera, renderer, controls, loader;
+        let currentModel = null;
+        let models = [];
+        
+        // 更新加载状态
+        function setLoadingText(text) {
+            document.getElementById('loading-text').textContent = text;
+            log('Status: ' + text);
+        }
+        
+        // 初始化 Three.js
+        function initThreeJS() {
+            log('Initializing Three.js...');
+            setLoadingText('初始化 3D 引擎...');
+            
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            log(`Container size: ${width}x${height}`);
+            
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            
+            // 相机
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 100);
+            camera.position.set(0, 0, 1);
+            
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+            
+            // 控制器
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 0.1;
+            controls.maxDistance = 10;
+            
+            // 加载器
+            loader = new GLTFLoader();
+            
+            // 灯光
+            setupLights('studio');
+            
+            // 地面网格
+            const gridHelper = new THREE.GridHelper(2, 20, 0x444444, 0x333333);
+            gridHelper.rotation.x = Math.PI / 2;
+            gridHelper.position.z = -0.01;
+            scene.add(gridHelper);
+            
+            // 窗口大小调整
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始渲染循环
+            animate();
+            
+            log('Three.js initialized successfully');
+            return true;
+        }
+        
+        // 设置灯光
+        function setupLights(environment) {
+            // 移除现有灯光
+            scene.children
+                .filter(child => child.isLight)
+                .forEach(light => scene.remove(light));
+            
+            if (environment === 'studio') {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+                keyLight.position.set(1, 1, 2);
+                scene.add(keyLight);
+                const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                fillLight.position.set(-1, 0.5, 1);
+                scene.add(fillLight);
+                const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                backLight.position.set(0, -1, -1);
+                scene.add(backLight);
+                scene.background = new THREE.Color(0x1a1a2e);
+            } else if (environment === 'outdoor') {
+                const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.6);
+                scene.add(ambientLight);
+                const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+                sunLight.position.set(2, 3, 1);
+                scene.add(sunLight);
+                scene.background = new THREE.Color(0x87ceeb);
+            } else if (environment === 'night') {
+                const ambientLight = new THREE.AmbientLight(0x1a1a3e, 0.3);
+                scene.add(ambientLight);
+                const moonLight = new THREE.DirectionalLight(0x6666aa, 0.5);
+                moonLight.position.set(-1, 2, 1);
+                scene.add(moonLight);
+                const streetLight = new THREE.PointLight(0xffaa44, 1, 3);
+                streetLight.position.set(0.5, 0.5, 0.5);
+                scene.add(streetLight);
+                scene.background = new THREE.Color(0x0a0a1e);
+            }
+            log('Lights set to: ' + environment);
+        }
+        
+        // 窗口大小调整
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+        
+        // 渲染循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // 加载 GLB 模型
+        function loadModel(glbUrl, modelInfo) {
+            log('Loading model: ' + glbUrl);
+            document.getElementById('loading').classList.remove('hidden');
+            setLoadingText('加载模型中...');
+            
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel = null;
+            }
+            
+            loader.load(
+                glbUrl,
+                function(gltf) {
+                    log('Model loaded successfully');
+                    currentModel = gltf.scene;
+                    
+                    // 居中模型
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    currentModel.position.sub(center);
+                    
+                    scene.add(currentModel);
+                    
+                    // 调整相机
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    camera.position.set(0, 0, maxDim * 2);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
+                    
+                    updateInfoPanel(modelInfo);
+                    document.getElementById('loading').classList.add('hidden');
+                },
+                function(progress) {
+                    if (progress.total > 0) {
+                        const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                        setLoadingText(`加载中... ${percent}%`);
+                    }
+                },
+                function(error) {
+                    log('Error loading model: ' + error.message);
+                    setLoadingText('加载失败: ' + error.message);
+                    setTimeout(() => {
+                        document.getElementById('loading').classList.add('hidden');
+                    }, 3000);
+                }
+            );
+        }
+        
+        // 更新信息面板
+        function updateInfoPanel(info) {
+            document.getElementById('info-plate-number').textContent = info.plate_number || '-';
+            document.getElementById('info-plate-type').textContent = info.plate_type || '-';
+            const width = info.width_meters || 0.44;
+            const height = info.height_meters || 0.14;
+            document.getElementById('info-dimensions').textContent = 
+                (width * 100).toFixed(0) + 'cm × ' + (height * 100).toFixed(0) + 'cm';
+            document.getElementById('info-noise').textContent = info.noise_preset || '-';
+            
+            // 更新贴图预览
+            if (info.textures) {
+                const baseUrl = '/output/pbr/textures/';
+                ['basecolor', 'normal', 'roughness', 'metallic'].forEach(type => {
+                    const texPath = info.textures[type];
+                    if (texPath) {
+                        const filename = texPath.split('/').pop();
+                        document.getElementById('tex-' + type).src = baseUrl + filename;
+                    }
+                });
+            }
+        }
+        
+        // 加载模型列表
+        async function loadModelList() {
+            log('Loading model list...');
+            setLoadingText('加载模型列表...');
+            
+            try {
+                const response = await fetch('/api/models3d');
+                const data = await response.json();
+                models = data.models || [];
+                log('Loaded ' + models.length + ' models');
+                document.getElementById('model-count').textContent = models.length;
+                
+                const listContainer = document.getElementById('model-list');
+                listContainer.innerHTML = '';
+                
+                models.forEach((model, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'model-item';
+                    item.dataset.index = index;
+                    
+                    item.innerHTML = `
+                        <img class="model-thumb" src="${model.thumbnail}" alt="${model.plate_number}" onerror="this.style.display='none'">
+                        <div class="model-info">
+                            <div class="model-name">${model.plate_number}</div>
+                            <div class="model-type">${model.plate_type} · ${model.noise_preset}</div>
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        loadModel(model.glb_url, model);
+                    });
+                    
+                    listContainer.appendChild(item);
+                });
+                
+                // 自动加载第一个模型
+                if (models.length > 0 && listContainer.firstChild) {
+                    listContainer.firstChild.click();
+                } else {
+                    document.getElementById('loading').classList.add('hidden');
+                    setLoadingText('没有可用的模型');
+                }
+            } catch (error) {
+                log('Error loading model list: ' + error.message);
+                setLoadingText('加载模型列表失败');
+            }
+        }
+        
+        // 设置显示模式
+        function setDisplayMode(mode) {
+            if (!currentModel) return;
+            currentModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.wireframe = (mode === 'wireframe');
+                }
+            });
+            log('Display mode: ' + mode);
+        }
+        
+        // 控制按钮事件
+        function setupControls() {
+            document.getElementById('btn-front').addEventListener('click', () => {
+                camera.position.set(0, 0, 1);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-perspective').addEventListener('click', () => {
+                camera.position.set(0.5, 0.3, 0.8);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-texture').addEventListener('click', function() {
+                setDisplayMode('texture');
+                document.getElementById('btn-texture').classList.add('active');
+                document.getElementById('btn-wireframe').classList.remove('active');
+            });
+            
+            document.getElementById('btn-wireframe').addEventListener('click', function() {
+                setDisplayMode('wireframe');
+                document.getElementById('btn-wireframe').classList.add('active');
+                document.getElementById('btn-texture').classList.remove('active');
+            });
+            
+            document.getElementById('btn-env-studio').addEventListener('click', function() {
+                setupLights('studio');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-env-outdoor').addEventListener('click', function() {
+                setupLights('outdoor');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-env-night').addEventListener('click', function() {
+                setupLights('night');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                camera.position.set(0, 0, 1);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-screenshot').addEventListener('click', () => {
+                renderer.render(scene, camera);
+                const dataUrl = renderer.domElement.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'license_plate_3d.png';
+                link.href = dataUrl;
+                link.click();
+            });
+        }
+        
+        // 初始化
+        log('ES6 Module loaded');
+        log('THREE version: ' + THREE.REVISION);
+        
+        try {
+            initThreeJS();
+            setupControls();
+            await loadModelList();
+        } catch (error) {
+            log('Error: ' + error.message);
+            setLoadingText('初始化失败: ' + error.message);
+        }
+            })();
+
+
+        // GALLERY 页面脚本
+        (function() {
+
+        // 颜色映射
+        const colorMap = {
+            'blue': '#1890ff',
+            'green': '#52c41a',
+            'yellow': '#faad14',
+            'white': '#d9d9d9',
+            'black': '#262626',
+            'red': '#ff4d4f',
+            'unknown': '#999999'
+        };
+        
+        const colorNames = {
+            'blue': '蓝色',
+            'green': '绿色',
+            'yellow': '黄色',
+            'white': '白色',
+            'black': '黑色',
+            'red': '红色',
+            'unknown': '未知'
+        };
+        
+        let allPlates = [];
+        
+        // 加载分类选项
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+                const select = document.getElementById('categoryFilter');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载分类失败:', error);
+            }
+        }
+        
+        // 加载颜色选项
+        async function loadColors() {
+            try {
+                const response = await fetch('/api/colors');
+                const colors = await response.json();
+                const select = document.getElementById('colorFilter');
+                colors.forEach(color => {
+                    const option = document.createElement('option');
+                    option.value = color;
+                    option.textContent = colorNames[color] || color;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载颜色失败:', error);
+            }
+        }
+        
+        // 加载车牌数据
+        async function loadPlates() {
+            try {
+                const response = await fetch('/api/plates');
+                allPlates = await response.json();
+                renderPlates(allPlates);
+            } catch (error) {
+                console.error('加载车牌失败:', error);
+                document.getElementById('galleryGrid').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">😕</div>
+                        <p>加载失败，请刷新页面重试</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 渲染车牌列表
+        function renderPlates(plates) {
+            const grid = document.getElementById('galleryGrid');
+            const count = document.getElementById('resultsCount');
+            
+            count.textContent = `共 ${plates.length} 个车牌`;
+            
+            if (plates.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="icon">📭</div>
+                        <p>没有找到符合条件的车牌</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = plates.map(plate => `
+                <div class="plate-card">
+                    <div class="plate-image" onclick="showLightbox('${plate.image_url}')">
+                        <img src="${plate.image_url}" alt="${plate.plate_number}"
+                             onerror="this.parentElement.innerHTML='<span style=\\'color:#999\\'>图片加载失败</span>'">
+                    </div>
+                    <div class="plate-info">
+                        <div class="plate-number">${plate.plate_number}</div>
+                        <div class="plate-meta">
+                            <span class="tag tag-category">${plate.category}</span>
+                            <span class="tag tag-color" style="background: ${colorMap[plate.color] || '#999'}">
+                                ${colorNames[plate.color] || plate.color}
+                            </span>
+                            <span class="tag tag-layer">${plate.is_double ? '双层' : '单层'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 应用筛选
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const color = document.getElementById('colorFilter').value;
+            
+            let filtered = allPlates;
+            
+            if (search) {
+                filtered = filtered.filter(p => 
+                    p.plate_number.toLowerCase().includes(search) ||
+                    p.filename.toLowerCase().includes(search)
+                );
+            }
+            
+            if (category) {
+                filtered = filtered.filter(p => p.category === category);
+            }
+            
+            if (color) {
+                filtered = filtered.filter(p => p.color === color);
+            }
+            
+            renderPlates(filtered);
+        }
+        
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('colorFilter').value = '';
+            renderPlates(allPlates);
+        }
+        
+        // 显示灯箱
+        function showLightbox(imageUrl) {
+            document.getElementById('lightboxImg').src = imageUrl;
+            document.getElementById('lightbox').classList.add('active');
+        }
+        
+        // 关闭灯箱
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('lightbox-close')) {
+                this.classList.remove('active');
+            }
+        });
+        
+        // 回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadColors();
+            loadPlates();
+        });
+            })();
+
+
+        // ASSETS 页面脚本
+        (function() {
+
+        // 状态
+        let currentView = 'grid';
+        let currentPage = 1;
+        let perPage = 20;
+        let totalAssets = 0;
+        let selectedAssets = new Set();
+        let allAssets = [];
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAssets();
+            
+            // 搜索
+            document.getElementById('searchInput').addEventListener('input', debounce(loadAssets, 300));
+            document.getElementById('typeFilter').addEventListener('change', loadAssets);
+            document.getElementById('noiseFilter').addEventListener('change', loadAssets);
+        });
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+        
+        async function loadAssets() {
+            const search = document.getElementById('searchInput').value;
+            const type = document.getElementById('typeFilter').value;
+            const noise = document.getElementById('noiseFilter').value;
+            
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: perPage,
+                search: search,
+                color: type,
+                noise: noise
+            });
+            
+            try {
+                const response = await fetch(`/api/assets?${params}`);
+                const data = await response.json();
+                
+                allAssets = data.assets;
+                totalAssets = data.total;
+                
+                document.getElementById('totalCount').textContent = `共 ${totalAssets} 个资产`;
+                
+                renderAssets();
+                renderPagination(data.total, data.page, data.per_page);
+            } catch (error) {
+                console.error('加载资产失败:', error);
+            }
+        }
+        
+        function renderAssets() {
+            if (currentView === 'grid') {
+                renderGridView();
+            } else {
+                renderListView();
+            }
+        }
+        
+        function renderGridView() {
+            const grid = document.getElementById('assetsGrid');
+            
+            if (allAssets.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="icon">📭</div>
+                        <p>暂无资产</p>
+                        <a href="/generate" class="btn btn-primary">生成车牌</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = allAssets.map(asset => `
+                <div class="asset-card ${selectedAssets.has(asset.asset_id) ? 'selected' : ''}" 
+                     data-id="${asset.asset_id}">
+                    <div class="asset-checkbox ${selectedAssets.has(asset.asset_id) ? 'checked' : ''}"
+                         onclick="toggleSelect('${asset.asset_id}', event)">
+                        ${selectedAssets.has(asset.asset_id) ? '✓' : ''}
+                    </div>
+                    <div class="asset-menu" onclick="showAssetMenu('${asset.asset_id}', event)">⋮</div>
+                    <img src="${asset.image_url}" class="asset-image" alt="${asset.plate_number}"
+                         onclick="showDetail('${asset.asset_id}')">
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.plate_number}</div>
+                        <div class="asset-tags">
+                            <span class="asset-tag ${asset.color}">${asset.color}</span>
+                            <span class="asset-tag">${asset.noise_level}</span>
+                            ${asset.is_double ? '<span class="asset-tag">双层</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderListView() {
+            const list = document.getElementById('assetsList');
+            
+            if (allAssets.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暂无资产</p>
+                        <a href="/generate" class="btn btn-primary">生成车牌</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = allAssets.map(asset => `
+                <div class="asset-row ${selectedAssets.has(asset.asset_id) ? 'selected' : ''}"
+                     data-id="${asset.asset_id}">
+                    <div class="checkbox ${selectedAssets.has(asset.asset_id) ? 'checked' : ''}"
+                         onclick="toggleSelect('${asset.asset_id}', event)">
+                        ${selectedAssets.has(asset.asset_id) ? '✓' : ''}
+                    </div>
+                    <img src="${asset.image_url}" class="thumbnail" alt="${asset.plate_number}">
+                    <div class="info">
+                        <div class="name">${asset.plate_number}</div>
+                        <div class="meta">${asset.filename}</div>
+                    </div>
+                    <div class="tags">
+                        <span class="asset-tag ${asset.color}">${asset.color}</span>
+                        <span class="asset-tag">${asset.noise_level}</span>
+                    </div>
+                    <div class="size">${formatSize(asset.file_size)}</div>
+                    <div class="date">${formatDate(asset.created_at)}</div>
+                    <div class="actions">
+                        <button class="btn btn-ghost" onclick="showDetail('${asset.asset_id}')">👁️</button>
+                        <button class="btn btn-ghost" onclick="deleteAsset('${asset.asset_id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderPagination(total, page, perPage) {
+            const totalPages = Math.ceil(total / perPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = `
+                <button class="page-btn" onclick="goToPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹</button>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += `<span class="page-info">...</span>`;
+                }
+            }
+            
+            html += `
+                <button class="page-btn" onclick="goToPage(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>›</button>
+            `;
+            
+            pagination.innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            currentPage = page;
+            loadAssets();
+        }
+        
+        function setView(view) {
+            currentView = view;
+            
+            document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('assetsGrid').classList.toggle('hidden', view !== 'grid');
+            document.getElementById('assetsList').classList.toggle('active', view === 'list');
+            
+            renderAssets();
+        }
+        
+        function toggleSelect(assetId, event) {
+            event.stopPropagation();
+            
+            if (selectedAssets.has(assetId)) {
+                selectedAssets.delete(assetId);
+            } else {
+                selectedAssets.add(assetId);
+            }
+            
+            updateBulkActions();
+            renderAssets();
+        }
+        
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedAssets.size > 0) {
+                bulkActions.classList.add('show');
+                selectedCount.textContent = selectedAssets.size;
+            } else {
+                bulkActions.classList.remove('show');
+            }
+        }
+        
+        function clearSelection() {
+            selectedAssets.clear();
+            updateBulkActions();
+            renderAssets();
+        }
+        
+        async function deleteSelected() {
+            if (selectedAssets.size === 0) return;
+            
+            if (!confirm(`确定要删除 ${selectedAssets.size} 个资产吗？`)) return;
+            
+            try {
+                const response = await fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_ids: Array.from(selectedAssets) })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`已删除 ${data.deleted} 个资产`, 'success');
+                    selectedAssets.clear();
+                    updateBulkActions();
+                    loadAssets();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAsset(assetId) {
+            if (!confirm('确定要删除这个资产吗？')) return;
+            
+            try {
+                const response = await fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_ids: [assetId] })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('删除成功', 'success');
+                    loadAssets();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        function showDetail(assetId) {
+            const asset = allAssets.find(a => a.asset_id === assetId);
+            if (!asset) return;
+            
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('modalBody');
+            
+            body.innerHTML = `
+                <img src="${asset.image_url}" class="detail-image" alt="${asset.plate_number}">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="label">车牌号</div>
+                        <div class="value">${asset.plate_number}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">类型</div>
+                        <div class="value">${asset.plate_type}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">颜色</div>
+                        <div class="value">${asset.color}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">噪声等级</div>
+                        <div class="value">${asset.noise_level}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">尺寸</div>
+                        <div class="value">${asset.width} × ${asset.height}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">文件大小</div>
+                        <div class="value">${formatSize(asset.file_size)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">双层</div>
+                        <div class="value">${asset.is_double ? '是' : '否'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">创建时间</div>
+                        <div class="value">${formatDate(asset.created_at)}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function showAssetMenu(assetId, event) {
+            event.stopPropagation();
+            // 简化处理，直接显示详情
+            showDetail(assetId);
+        }
+        
+        function refreshAssets() {
+            loadAssets();
+            showToast('刷新成功', 'success');
+        }
+        
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // 点击弹窗外部关闭
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+            })();
+
+    </script>
+</body>
+</html>
