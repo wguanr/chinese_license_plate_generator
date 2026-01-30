@@ -1,218 +1,109 @@
-# PCG-USD 车牌材质系统
+# Chinese License Plate Generator & Synthetic Data Toolkit
 
-一个基于程序化内容生成（PCG）的统一材质系统，专门用于生成符合OpenUSD规范的中国车牌材质。系统整合了材质参数管理、贴图自动分类、材质变体生成和USD导出功能，提供了简洁高效的材质管理解决方案。
+这是一个功能强大的程序化内容生成（PCG）系统，专门用于创建高度逼真的中国车牌3D资产和合成数据集。项目整合了从车牌生成、PBR 贴图、噪声叠加到多格式数据导出的完整工作流，并提供了一个直观的 Web 管理界面。
 
-## 核心特性
+**访问地址**: [https://5000-idxnv37w3vo4e9t66kzji-fa184fd9.sg1.manus.computer/](https://5000-idxnv37w3vo4e9t66kzji-fa184fd9.sg1.manus.computer/)
 
--   🎨 **自动贴图分类**: 根据文件名约定自动对车牌贴图进行分类。
--   🔧 **材质变体管理**: 支持在一个USD文件中生成和管理多种车牌类型的材质变体集。
--   📄 **USD 导出**: 生成符合OpenUSD规范的`.usda`材质库文件，方便在支持USD的各种软件（如Blender, Maya, Houdini, Unreal Engine）中使用。
--   ✨ **PBR材质**: 基于物理的渲染（PBR）标准，使用反照率、粗糙度和金属度参数。
--   ⚙️ **配置驱动**: 通过配置文件和参数类控制材质属性。
--   🐍 **Python原生**: 整个系统基于Python，并提供简单的API进行集成和扩展。
+## ✨ 核心功能
 
-## 系统架构
+| 功能模块 | 特性 | 描述 |
+|---|---|---|
+| 🌐 **Web 管理界面** | 控制台、生成、资产管理、3D 查看、导出 | 一个完整的 Flask 前端，用于管理整个生成流程。|
+| 🎨 **车牌生成** | 多类型、自定义、程序化 | 支持生成蓝色、绿色新能源、黄色、黑色等多种真实车牌。 |
+| 💥 **PBR 噪声系统** | 贴图驱动、多层叠加、物理渲染 | 使用 500+ 真实噪声贴图，生成 BaseColor, Normal, Roughness 等 PBR 贴图。 |
+| 📦 **数据集导出** | DINO, KITTI, USD, JSON | 一键导出适用于目标检测和 3D 仿真的多种主流数据集格式。 |
+| 👓 **交互式 3D 查看器** | GLB 渲染、PBR 材质、环境光 | 在网页中实时渲染和查看生成的 3D 车牌模型，支持视角、光照切换。 |
+| 🔌 **RESTful API** | 异步任务、状态查询、文件服务 | 提供一套完整的后端 API，用于程序化调用和系统集成。 |
 
-系统采用模块化设计，核心组件包括：
+## 🚀 快速开始
 
--   `core/material_params.py`: 定义材质参数的数据类，支持参数验证和序列化。
--   `core/usd_material_system.py`: 统一的USD材质系统，整合所有功能。
--   `core/texture_classifier.py`: 根据命名规则对贴图文件进行分类。
--   `scripts/`: 包含用于执行主要生成流程的脚本。
+### 1. 安装依赖
 
-```
-PCG-USD材质系统
-├── 贴图分类器 (TextureClassifier)
-│   ├── 自动分类贴图
-│   └── 变体组映射
-├── 材质变体管理器 (MaterialVariantManager)
-│   ├── 变体集创建
-│   └── USD文件生成
-├── USD材质系统 (USDMaterialSystem)
-│   ├── 统一接口
-│   └── 材质管理
-└── 脚本/工具
-    └── 生成脚本
-```
-
-## 安装依赖
-
-为了使用本系统的全部功能，特别是USD导出功能，您需要安装Pixar的USD Python库。
-
-### 推荐方法：使用pip安装
+系统依赖 Python 3 和一些第三方库。核心依赖包括 Pixar 的 USD 工具包。
 
 ```bash
-pip install usd-core
+sudo apt-get update
+sudo apt-get install -y python3-pip git-lfs unrar
+sudo pip3 install -r requirements.txt
 ```
 
-### 其他方法：使用conda安装
+### 2. 拉取 LFS 资源
+
+项目使用 Git LFS 存储大型贴图资源。请确保已安装 `git-lfs` 并拉取资源。
 
 ```bash
-conda install -c conda-forge usd-core
+git lfs install
+git lfs pull
 ```
 
-### 在Blender等独立环境中使用
-
-如果要在Blender等使用独立Python环境的软件中使用，需要将库安装到其对应的环境中。
-
-1.  找到Blender的Python可执行文件路径。可以在Blender的Python控制台中运行以下命令查看：
-    ```python
-    import sys
-    print(sys.executable)
-    ```
-2.  使用该路径下的pip进行安装。例如，在Windows上：
-    ```bash
-    "C:\Program Files\Blender Foundation\Blender 4.2\4.2\python\bin\python.exe" -m pip install usd-core
-    ```
-
-### 验证安装
-
-运行以下Python代码来验证USD库是否安装成功：
-
-```python
-try:
-    from pxr import Usd, UsdGeom, Sdf
-    print("USD库安装成功！")
-except ImportError as e:
-    print(f"USD库安装失败: {e}")
-```
-
-## 快速开始
-
-### 1. 使用脚本生成
-
-通过运行项目提供的脚本，可以快速生成车牌材质和模型。
+### 3. 启动管理系统
 
 ```bash
-# 运行主生成脚本
-python scripts/generate_license_plates.py --input assets/plates_base/img --output data/output
+python3 visualization/run_server.py
 ```
 
-### 2. 作为库在代码中使用
+服务启动后，即可通过浏览器访问 `http://localhost:5000`。
 
-您也可以将本系统作为库导入到您自己的Python项目中。
+## 🏛️ 系统架构
 
-```python
-from core.usd_material_system import create_usd_material_system
+系统采用高度模块化的设计，确保了功能的独立性和可扩展性。
 
-# 1. 创建材质系统
-system = create_usd_material_system(
-    assets_dir="assets",
-    output_dir="output",
-    usd_stage_path="output/stage.usda"
-)
+```mermaid
+graph TD
+    subgraph A [用户界面]
+        A1[Web UI (Flask)]
+    end
 
-# 2. 创建一个材质实例
-material = system.create_material_instance(
-    instance_name="license_plate_001",
-    albedo_texture_path="assets/textures/plate_blue_car_false.png",
-    roughness=0.2,
-    metallic=0.8
-)
+    subgraph B [核心生成器]
+        B1[车牌生成器]
+        B2[PBR 噪声模块]
+        B3[贴图管理器]
+    end
 
-# 3. 基于基础材质生成变体
-variants = system.generate_material_variants(
-    base_material_name="license_plate_001",
-    variant_count=5
-)
+    subgraph C [数据与导出]
+        C1[数据集导出器]
+        C2[USD/GLB 导出器]
+        C3[JSON 元数据]
+    end
 
-# 4. 导出为USD材质库
-system.export_materials(
-    export_format="usd",
-    export_path="output/exported_materials"
-)
+    A1 --> B1
+    A1 --> C1
+    B1 --> B2
+    B2 --> B3
+    B1 --> C2
+    C1 --> C2
+    C1 --> C3
 ```
 
-### 3. 查看和使用USD文件
+- **Web UI (Flask)**: 提供用户交互界面，调用后端 API 完成操作。
+- **车牌生成器**: 负责根据用户配置生成基础车牌图像。
+- **PBR 噪声模块**: 核心的物理渲染模块，使用真实贴图生成 PBR 材质。
+- **数据集导出器**: 将生成的资产打包成 DINO, KITTI 等标准格式。
+- **USD/GLB 导出器**: 负责将 3D 模型和材质导出为 `.usda` 和 `.glb` 文件。
 
-您可以使用任何支持USD的软件来查看生成的文件（例如 `license_plate_materials.usda`）。
+## 🔧 API 文档
 
--   **`usdview`** (USD官方查看器):
-    ```bash
-    usdview output/license_plate_materials.usda
-    ```
-    在`usdview`中，您可以选择包含材质的Prim，并在右侧的“Meta Data”选项卡中找到变体集（如 `variantType`），然后通过下拉菜单切换不同的车牌变体。
+系统提供了一套完整的 RESTful API，用于程序化访问。详细的接口说明、参数和示例请查阅 `api_documentation.md` 文件。
 
--   **Blender, Maya, Houdini等**: 直接导入`.usda`文件。
+## 💡 核心概念
 
-##核心概念
+### PBR 贴图工作流
 
-### PBR 材质参数
+系统采用标准的 PBR (Physically Based Rendering) 金属/粗糙度工作流。
 
-本系统使用标准的PBR工作流，主要包含以下参数：
+- **BaseColor**: 污渍、灰尘、飞溅等贴图通过多层叠加混合，影响基础颜色。
+- **Normal**: 裂纹、划痕等高度信息被转换为法线贴图，用于表现表面凹凸细节。
+- **Roughness**: 根据噪声的分布和强度自动生成，控制表面粗糙度。
+- **Metallic**: 车牌为非金属材质，基础值为 0。
 
-1.  **`albedo_texture`** (反照率贴图)
-    -   作用：定义材质的基础颜色和纹理，如车牌的文字、背景和边框。
-    -   类型：`texture_2d`
+### 噪声贴图
 
-2.  **`roughness`** (粗糙度)
-    -   作用：控制表面的微观粗糙程度。
-    -   范围：`[0.0, 1.0]` (0.0 = 完全光滑, 1.0 = 完全粗糙/哑光)
+噪声系统使用了一个包含 500+ 高分辨率（2048x2048）真实照片贴图的资源包，涵盖了裂纹、污渍、灰尘、划痕等多种类型。通过随机采样、UV 缩放和多层混合，可以创造出无限的噪声组合。
 
-3.  **`metallic`** (金属度)
-    -   作用：控制材质的金属质感。
-    -   范围：`[0.0, 1.0]` (0.0 = 非金属, 1.0 = 纯金属)
+## 🤝 贡献
 
+欢迎通过提交 Issue 和 Pull Request 来改进这个系统。
 
-### 贴图命名约定
+## 📄 许可证
 
-为了实现自动分类，贴图文件需要遵循特定的命名约定。
-
--   **3字段格式**: `name_color_is_double.png` (例如: `plate_blue_car_false.png`)
--   **4字段格式**: `name_color_special_use_is_double.png` (例如: `plate_black_shi_false.png`)
-
-系统会根据文件名中的 **颜色** 关键字将贴图映射到不同的车牌类型。
-
-### 支持的车牌类型与变体
-
-系统预定义了多种车牌类型，每种类型都有默认的材质参数。这些类型会作为USD文件中的变体集存在。
-
-| 变体组 (`variantType`) | 描述 | 粗糙度 (`roughness`) | 金属度 (`metallic`) | 对应颜色关键字 |
-| :--- | :--- | :--- | :--- | :--- |
-| `civilian` | 民用车辆车牌 | 0.2 | 0.1 | `blue` |
-| `new_energy` | 新能源车辆车牌 | 0.15 | 0.8 | `green` |
-| `commercial` | 商用车辆车牌 | 0.3 | 0.5 | `yellow` |
-| `official` | 官方/警用车辆车牌 | 0.1 | 0.9 | `white` |
-| `special` | 特殊车辆车牌 | 0.05 | 0.95 | `black`, `red` |
-
-## 扩展与自定义
-
-### 添加新的车牌类型
-
-1.  **更新配置**: 在相关的配置文件或代码中（如 `core/config.py`），为 `material_templates` 添加一个新的条目。
-    ```python
-    'custom_type': {
-        'roughness': 0.25,
-        'metallic': 0.6,
-        'description': '自定义的新类型车牌'
-    }
-    ```
-2.  **更新命名规则**: 在 `naming_patterns` 中添加新的颜色或关键字映射，使其能正确分类新类型的贴图。
-    ```python
-    'new_color_keyword': ['new_color', 'custom_type']
-    ```
-
-### 自定义材质参数
-
-您可以在创建材质实例时直接覆盖默认参数，或修改配置文件中的默认模板。
-
-## 故障排除
-
--   **`ImportError: No module named 'pxr'`**: USD库未正确安装或未在当前Python环境中。请参照 **[安装依赖](#安装依赖)** 部分进行安装。
--   **贴图分类失败或不正确**:
-    -   检查贴图文件名是否遵循 **[贴图命名约定](#贴图命名约定)**。
-    -   检查贴图文件是否存在且路径可读。
--   **USD文件生成失败**:
-    -   确认输出目录存在并且有写入权限。
-    -   检查生成的变体集是否为空。
--   **材质在渲染器中显示异常**:
-    -   检查 `roughness` 和 `metallic` 参数是否在 `[0.0, 1.0]` 的有效范围内。
-    -   确认贴图文件路径在USD文件中是正确的相对路径或绝对路径。
-
-## 贡献
-
-欢迎通过提交Issue和Pull Request来改进这个系统。
-
-## 许可证
-
-本项目遵循MIT许可证。
+本项目遵循 MIT 许可证。

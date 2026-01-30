@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资产管理 - 车牌生成器管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #4a90d9;
+            --primary-dark: #357abd;
+            --success: #52c41a;
+            --warning: #faad14;
+            --danger: #ff4d4f;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-hover: #1f3460;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border: #2d3748;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h1 { font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .sidebar-header h1::before { content: '🚗'; font-size: 24px; }
+        .sidebar-nav { flex: 1; padding: 20px 0; }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--bg-hover); color: var(--primary); border-left-color: var(--primary); }
+        .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* 主内容区 */
+        .main-content { margin-left: 240px; padding: 30px; min-height: 100vh; }
+        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .page-header h2 { font-size: 28px; margin-bottom: 8px; }
+        .page-header p { color: var(--text-secondary); }
+        
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .search-box input:focus { border-color: var(--primary); }
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+        
+        .filter-group { display: flex; gap: 8px; }
+        
+        .filter-select {
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .filter-select:focus { border-color: var(--primary); }
+        
+        .view-toggle { display: flex; gap: 4px; }
+        
+        .view-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .view-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .view-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* 批量操作栏 */
+        .bulk-actions {
+            display: none;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+        
+        .bulk-actions.show { display: flex; }
+        
+        .bulk-actions .selected-count {
+            font-weight: 500;
+            color: var(--primary);
+        }
+        
+        .bulk-actions .actions { display: flex; gap: 8px; margin-left: auto; }
+        
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #e04040; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+        
+        /* 网格视图 */
+        .assets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .asset-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .asset-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .asset-card.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        
+        .asset-checkbox {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid white;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .asset-checkbox.checked { background: var(--primary); border-color: var(--primary); }
+        
+        .asset-menu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .asset-card:hover .asset-menu { opacity: 1; }
+        
+        .asset-image {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            background: var(--bg-dark);
+            padding: 10px;
+        }
+        
+        .asset-info { padding: 12px; }
+        .asset-name { font-size: 14px; font-weight: 500; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .asset-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        
+        .asset-tag {
+            padding: 2px 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .asset-tag.blue { background: rgba(24, 144, 255, 0.2); color: #1890ff; }
+        .asset-tag.yellow { background: rgba(250, 173, 20, 0.2); color: #faad14; }
+        .asset-tag.green { background: rgba(82, 196, 26, 0.2); color: #52c41a; }
+        .asset-tag.white { background: rgba(255, 255, 255, 0.2); color: #ffffff; }
+        .asset-tag.black { background: rgba(100, 100, 100, 0.3); color: #aaaaaa; }
+        
+        /* 列表视图 */
+        .assets-list { display: none; flex-direction: column; gap: 8px; }
+        .assets-list.active { display: flex; }
+        .assets-grid.hidden { display: none; }
+        
+        .asset-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .asset-row:hover { border-color: var(--primary); }
+        .asset-row.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        
+        .asset-row .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .asset-row .checkbox.checked { background: var(--primary); border-color: var(--primary); }
+        
+        .asset-row .thumbnail {
+            width: 80px;
+            height: 40px;
+            object-fit: contain;
+            background: var(--bg-dark);
+            border-radius: 4px;
+        }
+        
+        .asset-row .info { flex: 1; }
+        .asset-row .info .name { font-weight: 500; margin-bottom: 4px; }
+        .asset-row .info .meta { font-size: 12px; color: var(--text-secondary); }
+        
+        .asset-row .tags { display: flex; gap: 6px; }
+        .asset-row .size { font-size: 13px; color: var(--text-secondary); min-width: 80px; text-align: right; }
+        .asset-row .date { font-size: 13px; color: var(--text-secondary); min-width: 100px; }
+        .asset-row .actions { display: flex; gap: 8px; }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 30px;
+        }
+        
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .page-info { font-size: 14px; color: var(--text-secondary); margin: 0 16px; }
+        
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state .icon { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
+        .empty-state p { margin-bottom: 20px; }
+        
+        /* 详情弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.show { display: flex; }
+        
+        .modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-header h3 { font-size: 18px; }
+        
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 18px;
+        }
+        
+        .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+        
+        .modal-body { padding: 20px; }
+        
+        .detail-image {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .detail-item { }
+        .detail-item .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+        .detail-item .value { font-size: 14px; }
+        
+        /* 消息提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header"><h1>车牌生成器</h1></div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item"><span class="icon">📊</span><span>控制台</span></a>
+            <a href="/generate" class="nav-item"><span class="icon">🎨</span><span>生成车牌</span></a>
+            <a href="/assets" class="nav-item active"><span class="icon">📁</span><span>资产管理</span></a>
+            <a href="/export" class="nav-item"><span class="icon">📦</span><span>数据集导出</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div>Chinese License Plate Generator</div>
+            <div>v2.0.0</div>
+        </div>
+    </aside>
+    
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h2>资产管理</h2>
+                <p>浏览、筛选和管理已生成的车牌资产</p>
+            </div>
+            <div>
+                <span id="totalCount" style="color: var(--text-secondary); margin-right: 16px;">共 0 个资产</span>
+            </div>
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索车牌号或文件名...">
+            </div>
+            <div class="filter-group">
+                <select class="filter-select" id="typeFilter">
+                    <option value="">全部类型</option>
+                    <option value="blue">蓝色</option>
+                    <option value="yellow">黄色</option>
+                    <option value="green">绿色</option>
+                    <option value="white">白色</option>
+                    <option value="black">黑色</option>
+                </select>
+                <select class="filter-select" id="noiseFilter">
+                    <option value="">全部噪声</option>
+                    <option value="clean">无噪声</option>
+                    <option value="light">轻度</option>
+                    <option value="medium">中度</option>
+                    <option value="heavy">重度</option>
+                    <option value="random">随机</option>
+                </select>
+            </div>
+            <div class="view-toggle">
+                <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')">▦</button>
+                <button class="view-btn" id="listViewBtn" onclick="setView('list')">☰</button>
+            </div>
+            <button class="btn btn-ghost" onclick="refreshAssets()">🔄 刷新</button>
+        </div>
+        
+        <!-- 批量操作栏 -->
+        <div class="bulk-actions" id="bulkActions">
+            <span>已选择 <span class="selected-count" id="selectedCount">0</span> 个资产</span>
+            <div class="actions">
+                <button class="btn btn-ghost" onclick="clearSelection()">取消选择</button>
+                <button class="btn btn-danger" onclick="deleteSelected()">🗑️ 删除</button>
+            </div>
+        </div>
+        
+        <!-- 网格视图 -->
+        <div class="assets-grid" id="assetsGrid"></div>
+        
+        <!-- 列表视图 -->
+        <div class="assets-list" id="assetsList"></div>
+        
+        <!-- 分页 -->
+        <div class="pagination" id="pagination"></div>
+    </main>
+    
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>资产详情</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 状态
+        let currentView = 'grid';
+        let currentPage = 1;
+        let perPage = 20;
+        let totalAssets = 0;
+        let selectedAssets = new Set();
+        let allAssets = [];
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAssets();
+            
+            // 搜索
+            document.getElementById('searchInput').addEventListener('input', debounce(loadAssets, 300));
+            document.getElementById('typeFilter').addEventListener('change', loadAssets);
+            document.getElementById('noiseFilter').addEventListener('change', loadAssets);
+        });
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+        
+        async function loadAssets() {
+            const search = document.getElementById('searchInput').value;
+            const type = document.getElementById('typeFilter').value;
+            const noise = document.getElementById('noiseFilter').value;
+            
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: perPage,
+                search: search,
+                color: type,
+                noise: noise
+            });
+            
+            try {
+                const response = await fetch(`/api/assets?${params}`);
+                const data = await response.json();
+                
+                allAssets = data.assets;
+                totalAssets = data.total;
+                
+                document.getElementById('totalCount').textContent = `共 ${totalAssets} 个资产`;
+                
+                renderAssets();
+                renderPagination(data.total, data.page, data.per_page);
+            } catch (error) {
+                console.error('加载资产失败:', error);
+            }
+        }
+        
+        function renderAssets() {
+            if (currentView === 'grid') {
+                renderGridView();
+            } else {
+                renderListView();
+            }
+        }
+        
+        function renderGridView() {
+            const grid = document.getElementById('assetsGrid');
+            
+            if (allAssets.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="icon">📭</div>
+                        <p>暂无资产</p>
+                        <a href="/generate" class="btn btn-primary">生成车牌</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = allAssets.map(asset => `
+                <div class="asset-card ${selectedAssets.has(asset.asset_id) ? 'selected' : ''}" 
+                     data-id="${asset.asset_id}">
+                    <div class="asset-checkbox ${selectedAssets.has(asset.asset_id) ? 'checked' : ''}"
+                         onclick="toggleSelect('${asset.asset_id}', event)">
+                        ${selectedAssets.has(asset.asset_id) ? '✓' : ''}
+                    </div>
+                    <div class="asset-menu" onclick="showAssetMenu('${asset.asset_id}', event)">⋮</div>
+                    <img src="${asset.image_url}" class="asset-image" alt="${asset.plate_number}"
+                         onclick="showDetail('${asset.asset_id}')">
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.plate_number}</div>
+                        <div class="asset-tags">
+                            <span class="asset-tag ${asset.color}">${asset.color}</span>
+                            <span class="asset-tag">${asset.noise_level}</span>
+                            ${asset.is_double ? '<span class="asset-tag">双层</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderListView() {
+            const list = document.getElementById('assetsList');
+            
+            if (allAssets.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暂无资产</p>
+                        <a href="/generate" class="btn btn-primary">生成车牌</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = allAssets.map(asset => `
+                <div class="asset-row ${selectedAssets.has(asset.asset_id) ? 'selected' : ''}"
+                     data-id="${asset.asset_id}">
+                    <div class="checkbox ${selectedAssets.has(asset.asset_id) ? 'checked' : ''}"
+                         onclick="toggleSelect('${asset.asset_id}', event)">
+                        ${selectedAssets.has(asset.asset_id) ? '✓' : ''}
+                    </div>
+                    <img src="${asset.image_url}" class="thumbnail" alt="${asset.plate_number}">
+                    <div class="info">
+                        <div class="name">${asset.plate_number}</div>
+                        <div class="meta">${asset.filename}</div>
+                    </div>
+                    <div class="tags">
+                        <span class="asset-tag ${asset.color}">${asset.color}</span>
+                        <span class="asset-tag">${asset.noise_level}</span>
+                    </div>
+                    <div class="size">${formatSize(asset.file_size)}</div>
+                    <div class="date">${formatDate(asset.created_at)}</div>
+                    <div class="actions">
+                        <button class="btn btn-ghost" onclick="showDetail('${asset.asset_id}')">👁️</button>
+                        <button class="btn btn-ghost" onclick="deleteAsset('${asset.asset_id}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderPagination(total, page, perPage) {
+            const totalPages = Math.ceil(total / perPage);
+            const pagination = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            let html = `
+                <button class="page-btn" onclick="goToPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹</button>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += `<span class="page-info">...</span>`;
+                }
+            }
+            
+            html += `
+                <button class="page-btn" onclick="goToPage(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>›</button>
+            `;
+            
+            pagination.innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            currentPage = page;
+            loadAssets();
+        }
+        
+        function setView(view) {
+            currentView = view;
+            
+            document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('assetsGrid').classList.toggle('hidden', view !== 'grid');
+            document.getElementById('assetsList').classList.toggle('active', view === 'list');
+            
+            renderAssets();
+        }
+        
+        function toggleSelect(assetId, event) {
+            event.stopPropagation();
+            
+            if (selectedAssets.has(assetId)) {
+                selectedAssets.delete(assetId);
+            } else {
+                selectedAssets.add(assetId);
+            }
+            
+            updateBulkActions();
+            renderAssets();
+        }
+        
+        function updateBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedAssets.size > 0) {
+                bulkActions.classList.add('show');
+                selectedCount.textContent = selectedAssets.size;
+            } else {
+                bulkActions.classList.remove('show');
+            }
+        }
+        
+        function clearSelection() {
+            selectedAssets.clear();
+            updateBulkActions();
+            renderAssets();
+        }
+        
+        async function deleteSelected() {
+            if (selectedAssets.size === 0) return;
+            
+            if (!confirm(`确定要删除 ${selectedAssets.size} 个资产吗？`)) return;
+            
+            try {
+                const response = await fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_ids: Array.from(selectedAssets) })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`已删除 ${data.deleted} 个资产`, 'success');
+                    selectedAssets.clear();
+                    updateBulkActions();
+                    loadAssets();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function deleteAsset(assetId) {
+            if (!confirm('确定要删除这个资产吗？')) return;
+            
+            try {
+                const response = await fetch('/api/assets/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_ids: [assetId] })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('删除成功', 'success');
+                    loadAssets();
+                } else {
+                    showToast(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        function showDetail(assetId) {
+            const asset = allAssets.find(a => a.asset_id === assetId);
+            if (!asset) return;
+            
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('modalBody');
+            
+            body.innerHTML = `
+                <img src="${asset.image_url}" class="detail-image" alt="${asset.plate_number}">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="label">车牌号</div>
+                        <div class="value">${asset.plate_number}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">类型</div>
+                        <div class="value">${asset.plate_type}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">颜色</div>
+                        <div class="value">${asset.color}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">噪声等级</div>
+                        <div class="value">${asset.noise_level}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">尺寸</div>
+                        <div class="value">${asset.width} × ${asset.height}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">文件大小</div>
+                        <div class="value">${formatSize(asset.file_size)}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">双层</div>
+                        <div class="value">${asset.is_double ? '是' : '否'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">创建时间</div>
+                        <div class="value">${formatDate(asset.created_at)}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+        
+        function showAssetMenu(assetId, event) {
+            event.stopPropagation();
+            // 简化处理，直接显示详情
+            showDetail(assetId);
+        }
+        
+        function refreshAssets() {
+            loadAssets();
+            showToast('刷新成功', 'success');
+        }
+        
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // 点击弹窗外部关闭
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>

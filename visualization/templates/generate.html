@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生成车牌 - 车牌生成器管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #4a90d9;
+            --primary-dark: #357abd;
+            --success: #52c41a;
+            --warning: #faad14;
+            --danger: #ff4d4f;
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-hover: #1f3460;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border: #2d3748;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-header h1 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header h1::before { content: '🚗'; font-size: 24px; }
+        
+        .sidebar-nav { flex: 1; padding: 20px 0; }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-item.active { background: var(--bg-hover); color: var(--primary); border-left-color: var(--primary); }
+        .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            margin-left: 240px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+        
+        .page-header { margin-bottom: 30px; }
+        .page-header h2 { font-size: 28px; margin-bottom: 8px; }
+        .page-header p { color: var(--text-secondary); }
+        
+        /* 生成面板布局 */
+        .generate-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .generate-layout { grid-template-columns: 1fr; }
+        }
+        
+        /* 配置面板 */
+        .config-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .panel-header h3 {
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-body { padding: 24px; }
+        
+        /* 表单组 */
+        .form-group { margin-bottom: 24px; }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+        
+        /* 车牌类型选择 */
+        .plate-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .plate-type-item {
+            padding: 16px 12px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .plate-type-item:hover { border-color: var(--primary); }
+        .plate-type-item.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        
+        .plate-type-item .color-bar {
+            width: 60px;
+            height: 24px;
+            border-radius: 4px;
+            margin: 0 auto 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .plate-type-item .name { font-size: 13px; font-weight: 500; }
+        .plate-type-item .desc { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        
+        /* 噪声预设 */
+        .noise-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .noise-preset-item {
+            padding: 10px 16px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        
+        .noise-preset-item:hover { border-color: var(--primary); }
+        .noise-preset-item.selected { border-color: var(--primary); background: rgba(74, 144, 217, 0.1); }
+        
+        /* 数量滑块 */
+        .count-slider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .count-slider input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .count-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .count-value {
+            min-width: 60px;
+            padding: 8px 12px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        /* 输入框 */
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .input-field:focus { border-color: var(--primary); }
+        .input-field::placeholder { color: var(--text-secondary); }
+        
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #45a815; }
+        
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+        
+        .btn-block { width: 100%; }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        /* 预览面板 */
+        .preview-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            position: sticky;
+            top: 30px;
+        }
+        
+        .preview-area {
+            padding: 24px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-dark);
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .preview-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        .preview-placeholder .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        
+        .preview-image {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 任务列表 */
+        .task-section { margin-top: 30px; }
+        
+        .task-list { display: flex; flex-direction: column; gap: 12px; }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+        
+        .task-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .task-status.completed { background: var(--success); }
+        .task-status.running { background: var(--warning); animation: pulse 1.5s infinite; }
+        .task-status.pending { background: var(--text-secondary); }
+        .task-status.failed { background: var(--danger); }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .task-info { flex: 1; }
+        .task-info .task-name { font-weight: 500; margin-bottom: 4px; }
+        .task-info .task-meta { font-size: 12px; color: var(--text-secondary); }
+        
+        .task-progress { width: 150px; }
+        
+        .progress-bar {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-bar .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-align: right;
+        }
+        
+        .task-actions { display: flex; gap: 8px; }
+        
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        /* 加载动画 */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 消息提示 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+        <div class="sidebar-header"><h1>车牌生成器</h1></div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item"><span class="icon">📊</span><span>控制台</span></a>
+            <a href="/generate" class="nav-item active"><span class="icon">🎨</span><span>生成车牌</span></a>
+            <a href="/assets" class="nav-item"><span class="icon">📁</span><span>资产管理</span></a>
+            <a href="/export" class="nav-item"><span class="icon">📦</span><span>数据集导出</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div>Chinese License Plate Generator</div>
+            <div>v2.0.0</div>
+        </div>
+    </aside>
+    
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="page-header">
+            <h2>生成车牌</h2>
+            <p>自定义配置并生成车牌图像，支持实时预览和批量生成</p>
+        </div>
+        
+        <div class="generate-layout">
+            <!-- 配置面板 -->
+            <div class="config-section">
+                <div class="config-panel">
+                    <div class="panel-header">
+                        <h3>⚙️ 生成配置</h3>
+                    </div>
+                    <div class="panel-body">
+                        <!-- 车牌类型 -->
+                        <div class="form-group">
+                            <label class="form-label">车牌类型</label>
+                            <div class="plate-type-grid" id="plateTypeGrid"></div>
+                        </div>
+                        
+                        <!-- 噪声预设 -->
+                        <div class="form-group">
+                            <label class="form-label">噪声效果</label>
+                            <div class="noise-presets" id="noisePresets"></div>
+                        </div>
+                        
+                        <!-- 生成数量 -->
+                        <div class="form-group">
+                            <label class="form-label">生成数量</label>
+                            <div class="count-slider">
+                                <input type="range" id="countSlider" min="1" max="100" value="10">
+                                <div class="count-value" id="countValue">10</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 省份选择 -->
+                        <div class="form-group">
+                            <label class="form-label">省份（可选，留空随机）</label>
+                            <select class="input-field" id="provinceSelect">
+                                <option value="">随机省份</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div class="action-buttons">
+                            <button class="btn btn-ghost" onclick="generatePreview()">
+                                👁️ 预览
+                            </button>
+                            <button class="btn btn-primary btn-block" onclick="startBatchGenerate()">
+                                🚀 开始生成
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 任务列表 -->
+                <div class="config-panel task-section">
+                    <div class="panel-header">
+                        <h3>📋 生成任务</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="task-list" id="taskList">
+                            <div class="preview-placeholder">
+                                <div class="icon">📭</div>
+                                <p>暂无任务</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 预览面板 -->
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <h3>👁️ 实时预览</h3>
+                </div>
+                <div class="preview-area" id="previewArea">
+                    <div class="preview-placeholder">
+                        <div class="icon">🖼️</div>
+                        <p>点击"预览"按钮生成预览图</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // 配置状态
+        const config = {
+            plateType: 'blue',
+            noisePreset: 'medium',
+            count: 10,
+            province: ''
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPlateTypes();
+            loadNoisePresets();
+            loadProvinces();
+            loadTasks();
+            
+            // 数量滑块
+            const slider = document.getElementById('countSlider');
+            const countValue = document.getElementById('countValue');
+            slider.addEventListener('input', function() {
+                config.count = parseInt(this.value);
+                countValue.textContent = this.value;
+            });
+            
+            // 定时刷新任务
+            setInterval(loadTasks, 3000);
+        });
+        
+        async function loadPlateTypes() {
+            try {
+                const response = await fetch('/api/config/plate_types');
+                const data = await response.json();
+                
+                const grid = document.getElementById('plateTypeGrid');
+                grid.innerHTML = data.types.map(type => `
+                    <div class="plate-type-item ${type.id === config.plateType ? 'selected' : ''}" 
+                         onclick="selectPlateType('${type.id}')">
+                        <div class="color-bar" style="background: ${type.color}"></div>
+                        <div class="name">${type.name}</div>
+                        <div class="desc">${type.description}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载车牌类型失败:', error);
+            }
+        }
+        
+        async function loadNoisePresets() {
+            try {
+                const response = await fetch('/api/config/noise_presets');
+                const data = await response.json();
+                
+                const container = document.getElementById('noisePresets');
+                container.innerHTML = data.presets.map(preset => `
+                    <div class="noise-preset-item ${preset.id === config.noisePreset ? 'selected' : ''}"
+                         onclick="selectNoisePreset('${preset.id}')"
+                         title="${preset.description}">
+                        ${preset.name}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载噪声预设失败:', error);
+            }
+        }
+        
+        async function loadProvinces() {
+            try {
+                const response = await fetch('/api/config/provinces');
+                const data = await response.json();
+                
+                const select = document.getElementById('provinceSelect');
+                data.provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province;
+                    option.textContent = province;
+                    select.appendChild(option);
+                });
+                
+                select.addEventListener('change', function() {
+                    config.province = this.value;
+                });
+            } catch (error) {
+                console.error('加载省份失败:', error);
+            }
+        }
+        
+        function selectPlateType(typeId) {
+            config.plateType = typeId;
+            document.querySelectorAll('.plate-type-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        function selectNoisePreset(presetId) {
+            config.noisePreset = presetId;
+            document.querySelectorAll('.noise-preset-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+        
+        async function generatePreview() {
+            const previewArea = document.getElementById('previewArea');
+            previewArea.innerHTML = '<div class="loading-spinner"></div>';
+            
+            try {
+                const response = await fetch('/api/generate/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_type: config.plateType,
+                        noise_preset: config.noisePreset,
+                        province: config.province
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    previewArea.innerHTML = `
+                        <img src="${data.image_url}?t=${Date.now()}" class="preview-image" alt="预览">
+                    `;
+                } else {
+                    previewArea.innerHTML = `
+                        <div class="preview-placeholder">
+                            <div class="icon">❌</div>
+                            <p>${data.error || '生成失败'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                previewArea.innerHTML = `
+                    <div class="preview-placeholder">
+                        <div class="icon">❌</div>
+                        <p>请求失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function startBatchGenerate() {
+            try {
+                const response = await fetch('/api/generate/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plate_type: config.plateType,
+                        noise_preset: config.noisePreset,
+                        count: config.count,
+                        province: config.province
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`任务已创建: ${data.task_id}`, 'success');
+                    loadTasks();
+                } else {
+                    showToast(data.error || '创建任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('请求失败: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/generate/tasks');
+                const data = await response.json();
+                
+                const taskList = document.getElementById('taskList');
+                const tasks = data.tasks || [];
+                
+                if (tasks.length === 0) {
+                    taskList.innerHTML = `
+                        <div class="preview-placeholder">
+                            <div class="icon">📭</div>
+                            <p>暂无任务</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                taskList.innerHTML = tasks.map(task => `
+                    <div class="task-item">
+                        <div class="task-status ${task.status}"></div>
+                        <div class="task-info">
+                            <div class="task-name">任务 #${task.task_id}</div>
+                            <div class="task-meta">${task.plate_type} · ${task.noise_preset} · ${task.total} 张</div>
+                        </div>
+                        <div class="task-progress">
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${(task.progress / task.total) * 100}%"></div>
+                            </div>
+                            <div class="progress-text">${task.progress}/${task.total}</div>
+                        </div>
+                        <div class="task-actions">
+                            ${task.status === 'completed' ? `
+                                <button class="btn btn-icon btn-ghost" onclick="viewTaskResults('${task.task_id}')" title="查看结果">
+                                    👁️
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载任务失败:', error);
+            }
+        }
+        
+        async function viewTaskResults(taskId) {
+            window.location.href = `/assets?task=${taskId}`;
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

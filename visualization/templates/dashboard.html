@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车牌生成器 Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #1890ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e8e8e8;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            opacity: 0.85;
+            margin-top: 5px;
+        }
+        
+        .nav {
+            background: var(--card-bg);
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav a {
+            display: block;
+            padding: 15px 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav a:hover, .nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .stat-card .icon.blue { background: rgba(24, 144, 255, 0.1); color: var(--primary-color); }
+        .stat-card .icon.green { background: rgba(82, 196, 26, 0.1); color: var(--success-color); }
+        .stat-card .icon.yellow { background: rgba(250, 173, 20, 0.1); color: var(--warning-color); }
+        .stat-card .icon.red { background: rgba(255, 77, 79, 0.1); color: var(--error-color); }
+        
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .stat-card .label {
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+        
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+        
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 200px;
+            padding: 20px 0;
+        }
+        
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 80px;
+        }
+        
+        .bar {
+            width: 40px;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #40a9ff 100%);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s ease;
+            min-height: 4px;
+        }
+        
+        .bar-label {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        
+        .bar-value {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .pie-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+        }
+        
+        .pie-visual {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            position: relative;
+        }
+        
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .recent-section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .recent-section h3 {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .plates-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        
+        .plate-thumb {
+            aspect-ratio: 4/1;
+            background: #f5f5f5;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .plate-thumb:hover {
+            transform: scale(1.05);
+        }
+        
+        .plate-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .system-info {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .system-info h3 {
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .info-item {
+            padding: 12px;
+            background: var(--bg-color);
+            border-radius: 4px;
+        }
+        
+        .info-item .label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .info-item .value {
+            font-size: 14px;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🚗 车牌生成器 Dashboard</h1>
+        <p>程序化内容生成系统 - 可视化管理界面</p>
+    </header>
+    
+    <nav class="nav">
+        <ul>
+            <li><a href="/" class="active">Dashboard</a></li>
+            <li><a href="/gallery">图库</a></li>
+            <li><a href="/export">导出</a></li>
+        </ul>
+    </nav>
+    
+    <main class="container">
+        <div class="actions">
+            <button class="btn btn-primary" onclick="refreshData()">
+                🔄 刷新数据
+            </button>
+        </div>
+        
+        <section class="stats-grid" id="statsGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </section>
+        
+        <section class="charts-grid">
+            <div class="chart-card">
+                <h3>📊 分类分布</h3>
+                <div class="chart-container">
+                    <div class="bar-chart" id="categoryChart">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3>🎨 颜色分布</h3>
+                <div class="chart-container">
+                    <div class="pie-chart" id="colorChart">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="recent-section">
+            <h3>🖼️ 最近生成的车牌</h3>
+            <div class="plates-preview" id="recentPlates">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </section>
+        
+        <section class="system-info">
+            <h3>⚙️ 系统信息</h3>
+            <div class="info-grid" id="systemInfo">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </section>
+    </main>
+    
+    <script>
+        // 颜色映射
+        const colorMap = {
+            'blue': '#1890ff',
+            'green': '#52c41a',
+            'yellow': '#faad14',
+            'white': '#d9d9d9',
+            'black': '#262626',
+            'red': '#ff4d4f',
+            'unknown': '#999999'
+        };
+        
+        // 加载统计数据
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                renderStats(stats);
+                renderCategoryChart(stats.categories);
+                renderColorChart(stats.colors);
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+            }
+        }
+        
+        // 渲染统计卡片
+        function renderStats(stats) {
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = `
+                <div class="stat-card">
+                    <div class="icon blue">📋</div>
+                    <div class="value">${stats.total_plates}</div>
+                    <div class="label">总车牌数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon green">📁</div>
+                    <div class="value">${Object.keys(stats.categories).length}</div>
+                    <div class="label">分类数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon yellow">📦</div>
+                    <div class="value">${stats.total_size_mb} MB</div>
+                    <div class="label">总文件大小</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon red">🕐</div>
+                    <div class="value" style="font-size: 16px;">${stats.last_generated}</div>
+                    <div class="label">最后生成时间</div>
+                </div>
+            `;
+        }
+        
+        // 渲染分类柱状图
+        function renderCategoryChart(categories) {
+            const chart = document.getElementById('categoryChart');
+            const entries = Object.entries(categories);
+            
+            if (entries.length === 0) {
+                chart.innerHTML = '<div class="loading">暂无数据</div>';
+                return;
+            }
+            
+            const maxValue = Math.max(...entries.map(([, v]) => v));
+            
+            chart.innerHTML = entries.map(([name, value]) => `
+                <div class="bar-item">
+                    <div class="bar-value">${value}</div>
+                    <div class="bar" style="height: ${(value / maxValue) * 150}px;"></div>
+                    <div class="bar-label">${name}</div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染颜色饼图
+        function renderColorChart(colors) {
+            const chart = document.getElementById('colorChart');
+            const entries = Object.entries(colors);
+            
+            if (entries.length === 0) {
+                chart.innerHTML = '<div class="loading">暂无数据</div>';
+                return;
+            }
+            
+            const total = entries.reduce((sum, [, v]) => sum + v, 0);
+            let currentAngle = 0;
+            
+            // 生成渐变色
+            const gradients = entries.map(([name, value]) => {
+                const startAngle = currentAngle;
+                const angle = (value / total) * 360;
+                currentAngle += angle;
+                return `${colorMap[name] || '#999'} ${startAngle}deg ${currentAngle}deg`;
+            });
+            
+            chart.innerHTML = `
+                <div class="pie-visual" style="background: conic-gradient(${gradients.join(', ')});"></div>
+                <div class="pie-legend">
+                    ${entries.map(([name, value]) => `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: ${colorMap[name] || '#999'};"></div>
+                            <span>${name}: ${value} (${Math.round(value/total*100)}%)</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // 加载最近车牌
+        async function loadRecentPlates() {
+            try {
+                const response = await fetch('/api/plates');
+                const plates = await response.json();
+                renderRecentPlates(plates.slice(0, 12));
+            } catch (error) {
+                console.error('加载车牌失败:', error);
+            }
+        }
+        
+        // 渲染最近车牌
+        function renderRecentPlates(plates) {
+            const container = document.getElementById('recentPlates');
+            
+            if (plates.length === 0) {
+                container.innerHTML = '<div class="loading">暂无车牌数据</div>';
+                return;
+            }
+            
+            container.innerHTML = plates.map(plate => `
+                <div class="plate-thumb" title="${plate.plate_number}">
+                    <img src="${plate.image_url}" alt="${plate.plate_number}" 
+                         onerror="this.parentElement.style.background='#f0f0f0'">
+                </div>
+            `).join('');
+        }
+        
+        // 加载系统信息
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/api/system');
+                const info = await response.json();
+                renderSystemInfo(info);
+            } catch (error) {
+                console.error('加载系统信息失败:', error);
+            }
+        }
+        
+        // 渲染系统信息
+        function renderSystemInfo(info) {
+            const container = document.getElementById('systemInfo');
+            container.innerHTML = `
+                <div class="info-item">
+                    <div class="label">操作系统</div>
+                    <div class="value">${info.platform} ${info.platform_release}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Python版本</div>
+                    <div class="value">${info.python_version}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">项目根目录</div>
+                    <div class="value">${info.project_root}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">输出目录</div>
+                    <div class="value">${info.output_dir}</div>
+                </div>
+            `;
+        }
+        
+        // 刷新数据
+        function refreshData() {
+            loadStats();
+            loadRecentPlates();
+            loadSystemInfo();
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+        });
+    </script>
+</body>
+</html>

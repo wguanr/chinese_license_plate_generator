@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车牌图库 - 车牌生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #1890ff;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #666666;
+            --border-color: #e8e8e8;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            color: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            opacity: 0.85;
+            margin-top: 5px;
+        }
+        
+        .nav {
+            background: var(--card-bg);
+            padding: 0 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav a {
+            display: block;
+            padding: 15px 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .nav a:hover, .nav a.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+        
+        .filters {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .filters-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .filter-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .plate-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .plate-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .plate-image {
+            width: 100%;
+            aspect-ratio: 4/1;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .plate-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .plate-info {
+            padding: 16px;
+        }
+        
+        .plate-number {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .plate-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .tag-category {
+            background: rgba(24, 144, 255, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .tag-color {
+            color: white;
+        }
+        
+        .tag-layer {
+            background: rgba(82, 196, 26, 0.1);
+            color: var(--success-color);
+        }
+        
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
+        }
+        
+        .lightbox.active {
+            display: flex;
+        }
+        
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-secondary);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🚗 车牌生成器 Dashboard</h1>
+        <p>程序化内容生成系统 - 可视化管理界面</p>
+    </header>
+    
+    <nav class="nav">
+        <ul>
+            <li><a href="/">Dashboard</a></li>
+            <li><a href="/gallery" class="active">图库</a></li>
+            <li><a href="/export">导出</a></li>
+        </ul>
+    </nav>
+    
+    <main class="container">
+        <section class="filters">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label>搜索车牌号</label>
+                    <input type="text" id="searchInput" placeholder="输入车牌号...">
+                </div>
+                
+                <div class="filter-group">
+                    <label>分类</label>
+                    <select id="categoryFilter">
+                        <option value="">全部分类</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>颜色</label>
+                    <select id="colorFilter">
+                        <option value="">全部颜色</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" style="align-self: flex-end;">
+                    <button class="btn btn-primary" onclick="applyFilters()">🔍 筛选</button>
+                </div>
+                
+                <div class="filter-group" style="align-self: flex-end;">
+                    <button class="btn btn-secondary" onclick="resetFilters()">🔄 重置</button>
+                </div>
+            </div>
+        </section>
+        
+        <div class="results-info">
+            <span id="resultsCount">加载中...</span>
+        </div>
+        
+        <section class="gallery-grid" id="galleryGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </section>
+    </main>
+    
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+    
+    <script>
+        // 颜色映射
+        const colorMap = {
+            'blue': '#1890ff',
+            'green': '#52c41a',
+            'yellow': '#faad14',
+            'white': '#d9d9d9',
+            'black': '#262626',
+            'red': '#ff4d4f',
+            'unknown': '#999999'
+        };
+        
+        const colorNames = {
+            'blue': '蓝色',
+            'green': '绿色',
+            'yellow': '黄色',
+            'white': '白色',
+            'black': '黑色',
+            'red': '红色',
+            'unknown': '未知'
+        };
+        
+        let allPlates = [];
+        
+        // 加载分类选项
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const categories = await response.json();
+                const select = document.getElementById('categoryFilter');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载分类失败:', error);
+            }
+        }
+        
+        // 加载颜色选项
+        async function loadColors() {
+            try {
+                const response = await fetch('/api/colors');
+                const colors = await response.json();
+                const select = document.getElementById('colorFilter');
+                colors.forEach(color => {
+                    const option = document.createElement('option');
+                    option.value = color;
+                    option.textContent = colorNames[color] || color;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载颜色失败:', error);
+            }
+        }
+        
+        // 加载车牌数据
+        async function loadPlates() {
+            try {
+                const response = await fetch('/api/plates');
+                allPlates = await response.json();
+                renderPlates(allPlates);
+            } catch (error) {
+                console.error('加载车牌失败:', error);
+                document.getElementById('galleryGrid').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">😕</div>
+                        <p>加载失败，请刷新页面重试</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 渲染车牌列表
+        function renderPlates(plates) {
+            const grid = document.getElementById('galleryGrid');
+            const count = document.getElementById('resultsCount');
+            
+            count.textContent = `共 ${plates.length} 个车牌`;
+            
+            if (plates.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="icon">📭</div>
+                        <p>没有找到符合条件的车牌</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = plates.map(plate => `
+                <div class="plate-card">
+                    <div class="plate-image" onclick="showLightbox('${plate.image_url}')">
+                        <img src="${plate.image_url}" alt="${plate.plate_number}"
+                             onerror="this.parentElement.innerHTML='<span style=\\'color:#999\\'>图片加载失败</span>'">
+                    </div>
+                    <div class="plate-info">
+                        <div class="plate-number">${plate.plate_number}</div>
+                        <div class="plate-meta">
+                            <span class="tag tag-category">${plate.category}</span>
+                            <span class="tag tag-color" style="background: ${colorMap[plate.color] || '#999'}">
+                                ${colorNames[plate.color] || plate.color}
+                            </span>
+                            <span class="tag tag-layer">${plate.is_double ? '双层' : '单层'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 应用筛选
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const color = document.getElementById('colorFilter').value;
+            
+            let filtered = allPlates;
+            
+            if (search) {
+                filtered = filtered.filter(p => 
+                    p.plate_number.toLowerCase().includes(search) ||
+                    p.filename.toLowerCase().includes(search)
+                );
+            }
+            
+            if (category) {
+                filtered = filtered.filter(p => p.category === category);
+            }
+            
+            if (color) {
+                filtered = filtered.filter(p => p.color === color);
+            }
+            
+            renderPlates(filtered);
+        }
+        
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('colorFilter').value = '';
+            renderPlates(allPlates);
+        }
+        
+        // 显示灯箱
+        function showLightbox(imageUrl) {
+            document.getElementById('lightboxImg').src = imageUrl;
+            document.getElementById('lightbox').classList.add('active');
+        }
+        
+        // 关闭灯箱
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('lightbox-close')) {
+                this.classList.remove('active');
+            }
+        });
+        
+        // 回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadColors();
+            loadPlates();
+        });
+    </script>
+</body>
+</html>

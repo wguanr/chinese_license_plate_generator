@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 模型查看器 - 车牌生成器</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #4ade80;
+            text-decoration: none;
+        }
+        .nav { display: flex; gap: 1.5rem; }
+        .nav a {
+            color: #888;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .nav a:hover, .nav a.active {
+            color: #fff;
+            background: rgba(74, 222, 128, 0.1);
+        }
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        .sidebar {
+            width: 250px;
+            background: #1a1a2e;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+        }
+        .sidebar-header h3 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+        .model-count { font-size: 0.8rem; color: #666; }
+        .model-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        .model-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+        }
+        .model-item:hover { background: rgba(255, 255, 255, 0.05); }
+        .model-item.active {
+            background: rgba(74, 222, 128, 0.15);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+        .model-thumb {
+            width: 50px;
+            height: 25px;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #333;
+        }
+        .model-info { flex: 1; min-width: 0; }
+        .model-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .model-type { font-size: 0.7rem; color: #666; }
+        .viewer-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            background: #1a1a2e;
+        }
+        #canvas-container canvas { display: block; width: 100%; height: 100%; }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10;
+        }
+        .loading.hidden { display: none; }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333;
+            border-top-color: #4ade80;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toolbar {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(26, 26, 46, 0.9);
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #333;
+            z-index: 5;
+        }
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+            padding-right: 0.5rem;
+            border-right: 1px solid #333;
+        }
+        .toolbar-group:last-child { border-right: none; padding-right: 0; }
+        .toolbar button {
+            background: transparent;
+            border: none;
+            color: #888;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+        .toolbar button:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .toolbar button.active { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .info-panel {
+            width: 280px;
+            background: #1a1a2e;
+            border-left: 1px solid #333;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        .info-panel h4 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+        }
+        .info-label { color: #666; }
+        .info-value { color: #e0e0e0; font-weight: 500; }
+        .texture-preview { margin-top: 1.5rem; }
+        .texture-preview h5 { font-size: 0.8rem; color: #888; margin-bottom: 0.75rem; }
+        .texture-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .texture-item { text-align: center; }
+        .texture-item img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            background: #333;
+            margin-bottom: 0.25rem;
+        }
+        .texture-item span { font-size: 0.7rem; color: #666; }
+        .toolbar-label { font-size: 0.7rem; color: #666; padding: 0.5rem 0.25rem; }
+        #debug-log {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">🚗 车牌生成器 / 3D 查看器</a>
+        <nav class="nav">
+            <a href="/">控制台</a>
+            <a href="/generate">生成</a>
+            <a href="/assets">资产</a>
+            <a href="/viewer3d" class="active">3D 查看</a>
+            <a href="/export">导出</a>
+        </nav>
+    </header>
+    
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h3>3D 模型列表</h3>
+                <span class="model-count">共 <span id="model-count">0</span> 个模型</span>
+            </div>
+            <div class="model-list" id="model-list"></div>
+        </aside>
+        
+        <div class="viewer-container">
+            <div id="canvas-container">
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <span id="loading-text">初始化中...</span>
+                </div>
+            </div>
+            
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <span class="toolbar-label">视图</span>
+                    <button id="btn-front" title="正面">正面</button>
+                    <button id="btn-perspective" title="透视">透视</button>
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">显示</span>
+                    <button id="btn-texture" class="active" title="贴图">贴图</button>
+                    <button id="btn-wireframe" title="线框">线框</button>
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">环境</span>
+                    <button id="btn-env-studio" class="active" title="工作室">☀️</button>
+                    <button id="btn-env-outdoor" title="户外">🌤️</button>
+                    <button id="btn-env-night" title="夜间">🌙</button>
+                </div>
+                <div class="toolbar-group">
+                    <span class="toolbar-label">操作</span>
+                    <button id="btn-reset" title="重置视角">重置</button>
+                    <button id="btn-screenshot" title="截图">📷</button>
+                </div>
+            </div>
+        </div>
+        
+        <aside class="info-panel">
+            <h4>模型信息</h4>
+            <div class="info-row">
+                <span class="info-label">车牌号</span>
+                <span class="info-value" id="info-plate-number">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">类型</span>
+                <span class="info-value" id="info-plate-type">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">尺寸</span>
+                <span class="info-value" id="info-dimensions">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">噪声等级</span>
+                <span class="info-value" id="info-noise">-</span>
+            </div>
+            
+            <div class="texture-preview">
+                <h5>PBR 贴图</h5>
+                <div class="texture-grid" id="texture-grid">
+                    <div class="texture-item">
+                        <img id="tex-basecolor" src="" alt="BaseColor">
+                        <span>BaseColor</span>
+                    </div>
+                    <div class="texture-item">
+                        <img id="tex-normal" src="" alt="Normal">
+                        <span>Normal</span>
+                    </div>
+                    <div class="texture-item">
+                        <img id="tex-roughness" src="" alt="Roughness">
+                        <span>Roughness</span>
+                    </div>
+                    <div class="texture-item">
+                        <img id="tex-metallic" src="" alt="Metallic">
+                        <span>Metallic</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+    
+    <div id="debug-log"></div>
+    
+    <!-- 使用 importmap 加载 Three.js ES6 模块 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        
+        // 调试日志
+        const debugLog = document.getElementById('debug-log');
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            debugLog.innerHTML += `[${time}] ${msg}<br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(msg);
+        }
+        
+        // 全局变量
+        let scene, camera, renderer, controls, loader;
+        let currentModel = null;
+        let models = [];
+        
+        // 更新加载状态
+        function setLoadingText(text) {
+            document.getElementById('loading-text').textContent = text;
+            log('Status: ' + text);
+        }
+        
+        // 初始化 Three.js
+        function initThreeJS() {
+            log('Initializing Three.js...');
+            setLoadingText('初始化 3D 引擎...');
+            
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            log(`Container size: ${width}x${height}`);
+            
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            
+            // 相机
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 100);
+            camera.position.set(0, 0, 1);
+            
+            // 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+            
+            // 控制器
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 0.1;
+            controls.maxDistance = 10;
+            
+            // 加载器
+            loader = new GLTFLoader();
+            
+            // 灯光
+            setupLights('studio');
+            
+            // 地面网格
+            const gridHelper = new THREE.GridHelper(2, 20, 0x444444, 0x333333);
+            gridHelper.rotation.x = Math.PI / 2;
+            gridHelper.position.z = -0.01;
+            scene.add(gridHelper);
+            
+            // 窗口大小调整
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始渲染循环
+            animate();
+            
+            log('Three.js initialized successfully');
+            return true;
+        }
+        
+        // 设置灯光
+        function setupLights(environment) {
+            // 移除现有灯光
+            scene.children
+                .filter(child => child.isLight)
+                .forEach(light => scene.remove(light));
+            
+            if (environment === 'studio') {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+                keyLight.position.set(1, 1, 2);
+                scene.add(keyLight);
+                const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                fillLight.position.set(-1, 0.5, 1);
+                scene.add(fillLight);
+                const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+                backLight.position.set(0, -1, -1);
+                scene.add(backLight);
+                scene.background = new THREE.Color(0x1a1a2e);
+            } else if (environment === 'outdoor') {
+                const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.6);
+                scene.add(ambientLight);
+                const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.2);
+                sunLight.position.set(2, 3, 1);
+                scene.add(sunLight);
+                scene.background = new THREE.Color(0x87ceeb);
+            } else if (environment === 'night') {
+                const ambientLight = new THREE.AmbientLight(0x1a1a3e, 0.3);
+                scene.add(ambientLight);
+                const moonLight = new THREE.DirectionalLight(0x6666aa, 0.5);
+                moonLight.position.set(-1, 2, 1);
+                scene.add(moonLight);
+                const streetLight = new THREE.PointLight(0xffaa44, 1, 3);
+                streetLight.position.set(0.5, 0.5, 0.5);
+                scene.add(streetLight);
+                scene.background = new THREE.Color(0x0a0a1e);
+            }
+            log('Lights set to: ' + environment);
+        }
+        
+        // 窗口大小调整
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+        
+        // 渲染循环
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // 加载 GLB 模型
+        function loadModel(glbUrl, modelInfo) {
+            log('Loading model: ' + glbUrl);
+            document.getElementById('loading').classList.remove('hidden');
+            setLoadingText('加载模型中...');
+            
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel = null;
+            }
+            
+            loader.load(
+                glbUrl,
+                function(gltf) {
+                    log('Model loaded successfully');
+                    currentModel = gltf.scene;
+                    
+                    // 居中模型
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    currentModel.position.sub(center);
+                    
+                    scene.add(currentModel);
+                    
+                    // 调整相机
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    camera.position.set(0, 0, maxDim * 2);
+                    controls.target.set(0, 0, 0);
+                    controls.update();
+                    
+                    updateInfoPanel(modelInfo);
+                    document.getElementById('loading').classList.add('hidden');
+                },
+                function(progress) {
+                    if (progress.total > 0) {
+                        const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                        setLoadingText(`加载中... ${percent}%`);
+                    }
+                },
+                function(error) {
+                    log('Error loading model: ' + error.message);
+                    setLoadingText('加载失败: ' + error.message);
+                    setTimeout(() => {
+                        document.getElementById('loading').classList.add('hidden');
+                    }, 3000);
+                }
+            );
+        }
+        
+        // 更新信息面板
+        function updateInfoPanel(info) {
+            document.getElementById('info-plate-number').textContent = info.plate_number || '-';
+            document.getElementById('info-plate-type').textContent = info.plate_type || '-';
+            const width = info.width_meters || 0.44;
+            const height = info.height_meters || 0.14;
+            document.getElementById('info-dimensions').textContent = 
+                (width * 100).toFixed(0) + 'cm × ' + (height * 100).toFixed(0) + 'cm';
+            document.getElementById('info-noise').textContent = info.noise_preset || '-';
+            
+            // 更新贴图预览
+            if (info.textures) {
+                const baseUrl = '/output/pbr/textures/';
+                ['basecolor', 'normal', 'roughness', 'metallic'].forEach(type => {
+                    const texPath = info.textures[type];
+                    if (texPath) {
+                        const filename = texPath.split('/').pop();
+                        document.getElementById('tex-' + type).src = baseUrl + filename;
+                    }
+                });
+            }
+        }
+        
+        // 加载模型列表
+        async function loadModelList() {
+            log('Loading model list...');
+            setLoadingText('加载模型列表...');
+            
+            try {
+                const response = await fetch('/api/models3d');
+                const data = await response.json();
+                models = data.models || [];
+                log('Loaded ' + models.length + ' models');
+                document.getElementById('model-count').textContent = models.length;
+                
+                const listContainer = document.getElementById('model-list');
+                listContainer.innerHTML = '';
+                
+                models.forEach((model, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'model-item';
+                    item.dataset.index = index;
+                    
+                    item.innerHTML = `
+                        <img class="model-thumb" src="${model.thumbnail}" alt="${model.plate_number}" onerror="this.style.display='none'">
+                        <div class="model-info">
+                            <div class="model-name">${model.plate_number}</div>
+                            <div class="model-type">${model.plate_type} · ${model.noise_preset}</div>
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', function() {
+                        document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        loadModel(model.glb_url, model);
+                    });
+                    
+                    listContainer.appendChild(item);
+                });
+                
+                // 自动加载第一个模型
+                if (models.length > 0 && listContainer.firstChild) {
+                    listContainer.firstChild.click();
+                } else {
+                    document.getElementById('loading').classList.add('hidden');
+                    setLoadingText('没有可用的模型');
+                }
+            } catch (error) {
+                log('Error loading model list: ' + error.message);
+                setLoadingText('加载模型列表失败');
+            }
+        }
+        
+        // 设置显示模式
+        function setDisplayMode(mode) {
+            if (!currentModel) return;
+            currentModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.wireframe = (mode === 'wireframe');
+                }
+            });
+            log('Display mode: ' + mode);
+        }
+        
+        // 控制按钮事件
+        function setupControls() {
+            document.getElementById('btn-front').addEventListener('click', () => {
+                camera.position.set(0, 0, 1);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-perspective').addEventListener('click', () => {
+                camera.position.set(0.5, 0.3, 0.8);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-texture').addEventListener('click', function() {
+                setDisplayMode('texture');
+                document.getElementById('btn-texture').classList.add('active');
+                document.getElementById('btn-wireframe').classList.remove('active');
+            });
+            
+            document.getElementById('btn-wireframe').addEventListener('click', function() {
+                setDisplayMode('wireframe');
+                document.getElementById('btn-wireframe').classList.add('active');
+                document.getElementById('btn-texture').classList.remove('active');
+            });
+            
+            document.getElementById('btn-env-studio').addEventListener('click', function() {
+                setupLights('studio');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-env-outdoor').addEventListener('click', function() {
+                setupLights('outdoor');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-env-night').addEventListener('click', function() {
+                setupLights('night');
+                document.querySelectorAll('[id^="btn-env-"]').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                camera.position.set(0, 0, 1);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+            
+            document.getElementById('btn-screenshot').addEventListener('click', () => {
+                renderer.render(scene, camera);
+                const dataUrl = renderer.domElement.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'license_plate_3d.png';
+                link.href = dataUrl;
+                link.click();
+            });
+        }
+        
+        // 初始化
+        log('ES6 Module loaded');
+        log('THREE version: ' + THREE.REVISION);
+        
+        try {
+            initThreeJS();
+            setupControls();
+            await loadModelList();
+        } catch (error) {
+            log('Error: ' + error.message);
+            setLoadingText('初始化失败: ' + error.message);
+        }
+    </script>
+</body>
+</html>

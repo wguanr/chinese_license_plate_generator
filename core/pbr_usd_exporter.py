@@ -1,0 +1,547 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+PBR USD 导出模块
+
+优化的 USD 导出流程，支持完整的 PBR 材质：
+- BaseColor 贴图
+- Normal 贴图
+- Roughness 贴图
+- Metallic 贴图
+
+作者: Chinese License Plate Generator
+版本: 2.0.0
+"""
+
+import json
+import shutil
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Optional, Tuple, Any
+import uuid
+
+import numpy as np
+from PIL import Image
+
+
+@dataclass
+class PBRTexturePaths:
+    """PBR 贴图路径集"""
+    basecolor: Path
+    normal: Path
+    roughness: Path
+    metallic: Path
+    
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "basecolor": str(self.basecolor),
+            "normal": str(self.normal),
+            "roughness": str(self.roughness),
+            "metallic": str(self.metallic)
+        }
+
+
+@dataclass
+class PlateAssetInfo:
+    """车牌资产信息"""
+    plate_number: str
+    plate_type: str
+    is_double: bool
+    width_meters: float = 0.44  # 标准车牌宽度
+    height_meters: float = 0.14  # 标准车牌高度
+    noise_preset: str = "medium"
+    pbr_textures: Optional[PBRTexturePaths] = None
+    
+    def __post_init__(self):
+        # 双层车牌高度不同
+        if self.is_double:
+            self.height_meters = 0.22
+
+
+class PBRUSDGenerator:
+    """PBR USD 文件生成器"""
+    
+    def __init__(self, output_dir: Path):
+        """
+        初始化生成器
+        
+        Args:
+            output_dir: USD 输出目录
+        """
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # 创建贴图子目录
+        self.textures_dir = self.output_dir / "textures"
+        self.textures_dir.mkdir(exist_ok=True)
+    
+    def generate_plate_usd(
+        self,
+        asset_info: PlateAssetInfo,
+        output_name: Optional[str] = None
+    ) -> Path:
+        """
+        生成单个车牌的 PBR USD 文件
+        
+        Args:
+            asset_info: 车牌资产信息
+            output_name: 输出文件名（不含扩展名）
+            
+        Returns:
+            生成的 USD 文件路径
+        """
+        if output_name is None:
+            output_name = asset_info.plate_number
+        
+        # 复制贴图到 textures 目录
+        texture_refs = self._copy_textures(asset_info, output_name)
+        
+        # 生成 USD 内容
+        usd_content = self._generate_pbr_usd_content(
+            asset_info=asset_info,
+            texture_refs=texture_refs
+        )
+        
+        # 写入 USD 文件
+        usd_path = self.output_dir / f"{output_name}.usda"
+        with open(usd_path, 'w', encoding='utf-8') as f:
+            f.write(usd_content)
+        
+        return usd_path
+    
+    def _copy_textures(
+        self,
+        asset_info: PlateAssetInfo,
+        output_name: str
+    ) -> Dict[str, str]:
+        """复制贴图到输出目录并返回相对路径"""
+        texture_refs = {}
+        
+        if asset_info.pbr_textures is None:
+            return texture_refs
+        
+        pbr = asset_info.pbr_textures
+        
+        # 复制各通道贴图
+        channels = [
+            ("basecolor", pbr.basecolor),
+            ("normal", pbr.normal),
+            ("roughness", pbr.roughness),
+            ("metallic", pbr.metallic),
+        ]
+        
+        for channel_name, src_path in channels:
+            if src_path and src_path.exists():
+                # 目标文件名
+                ext = src_path.suffix
+                dst_name = f"{output_name}_{channel_name}{ext}"
+                dst_path = self.textures_dir / dst_name
+                
+                # 复制文件
+                shutil.copy2(src_path, dst_path)
+                
+                # 记录相对路径
+                texture_refs[channel_name] = f"textures/{dst_name}"
+        
+        return texture_refs
+    
+    def _generate_pbr_usd_content(
+        self,
+        asset_info: PlateAssetInfo,
+        texture_refs: Dict[str, str]
+    ) -> str:
+        """生成 PBR USD 文件内容"""
+        
+        # 计算顶点坐标
+        half_w = asset_info.width_meters / 2
+        half_h = asset_info.height_meters / 2
+        
+        # 获取贴图路径（如果没有则使用默认值）
+        basecolor_path = texture_refs.get("basecolor", "")
+        normal_path = texture_refs.get("normal", "")
+        roughness_path = texture_refs.get("roughness", "")
+        metallic_path = texture_refs.get("metallic", "")
+        
+        # 构建材质部分
+        material_section = self._build_material_section(
+            basecolor_path=basecolor_path,
+            normal_path=normal_path,
+            roughness_path=roughness_path,
+            metallic_path=metallic_path
+        )
+        
+        usd_content = f'''#usda 1.0
+(
+    defaultPrim = "LicensePlate"
+    metersPerUnit = 1
+    upAxis = "Y"
+    doc = """
+    Chinese License Plate Asset - {asset_info.plate_number}
+    
+    PBR Material Channels:
+    - BaseColor: Diffuse color with dirt/dust overlays
+    - Normal: Surface detail from cracks and scratches
+    - Roughness: Surface roughness variation
+    - Metallic: Metallic properties
+    
+    Generated by Chinese License Plate Generator v2.0
+    """
+)
+
+def Xform "LicensePlate" (
+    kind = "component"
+    customData = {{
+        string plate_number = "{asset_info.plate_number}"
+        string plate_type = "{asset_info.plate_type}"
+        bool is_double_layer = {str(asset_info.is_double).lower()}
+        float width_meters = {asset_info.width_meters}
+        float height_meters = {asset_info.height_meters}
+        string noise_preset = "{asset_info.noise_preset}"
+        string generator_version = "2.0.0"
+    }}
+)
+{{
+    # 车牌几何体
+    def Mesh "PlateGeometry"
+    {{
+        # 顶点位置 (4个角点)
+        point3f[] points = [
+            ({-half_w}, {-half_h}, 0),
+            ({half_w}, {-half_h}, 0),
+            ({half_w}, {half_h}, 0),
+            ({-half_w}, {half_h}, 0)
+        ]
+        
+        # 面顶点计数和索引
+        int[] faceVertexCounts = [4]
+        int[] faceVertexIndices = [0, 1, 2, 3]
+        
+        # 法线 (朝向 +Z)
+        normal3f[] normals = [
+            (0, 0, 1), (0, 0, 1), (0, 0, 1), (0, 0, 1)
+        ] (
+            interpolation = "vertex"
+        )
+        
+        # UV 坐标
+        texCoord2f[] primvars:st = [
+            (0, 0), (1, 0), (1, 1), (0, 1)
+        ] (
+            interpolation = "vertex"
+        )
+        
+        # 切线 (用于法线贴图)
+        float3[] primvars:tangent = [
+            (1, 0, 0), (1, 0, 0), (1, 0, 0), (1, 0, 0)
+        ] (
+            interpolation = "vertex"
+        )
+        
+        # 材质绑定
+        rel material:binding = </LicensePlate/Materials/PBRMaterial>
+        
+        # 渲染设置
+        uniform bool doubleSided = false
+    }}
+    
+    # 材质定义
+    def Scope "Materials"
+    {{
+{material_section}
+    }}
+}}
+'''
+        return usd_content
+    
+    def _build_material_section(
+        self,
+        basecolor_path: str,
+        normal_path: str,
+        roughness_path: str,
+        metallic_path: str
+    ) -> str:
+        """构建 PBR 材质部分"""
+        
+        # 基础 PBR Shader 连接
+        shader_connections = []
+        texture_readers = []
+        
+        # BaseColor 贴图
+        if basecolor_path:
+            shader_connections.append(
+                "color3f inputs:diffuseColor.connect = </LicensePlate/Materials/PBRMaterial/BaseColorTexture.outputs:rgb>"
+            )
+            texture_readers.append(self._create_texture_reader(
+                "BaseColorTexture", basecolor_path, "rgb"
+            ))
+        else:
+            shader_connections.append("color3f inputs:diffuseColor = (0.5, 0.5, 0.5)")
+        
+        # Normal 贴图
+        if normal_path:
+            shader_connections.append(
+                "normal3f inputs:normal.connect = </LicensePlate/Materials/PBRMaterial/NormalTexture.outputs:rgb>"
+            )
+            texture_readers.append(self._create_normal_texture_reader(
+                "NormalTexture", normal_path
+            ))
+        
+        # Roughness 贴图
+        if roughness_path:
+            shader_connections.append(
+                "float inputs:roughness.connect = </LicensePlate/Materials/PBRMaterial/RoughnessTexture.outputs:r>"
+            )
+            texture_readers.append(self._create_texture_reader(
+                "RoughnessTexture", roughness_path, "r"
+            ))
+        else:
+            shader_connections.append("float inputs:roughness = 0.5")
+        
+        # Metallic 贴图
+        if metallic_path:
+            shader_connections.append(
+                "float inputs:metallic.connect = </LicensePlate/Materials/PBRMaterial/MetallicTexture.outputs:r>"
+            )
+            texture_readers.append(self._create_texture_reader(
+                "MetallicTexture", metallic_path, "r"
+            ))
+        else:
+            shader_connections.append("float inputs:metallic = 0.0")
+        
+        # 组装材质定义
+        shader_connections_str = "\n                ".join(shader_connections)
+        texture_readers_str = "\n\n".join(texture_readers)
+        
+        material_section = f'''        def Material "PBRMaterial"
+        {{
+            # 材质输出
+            token outputs:surface.connect = </LicensePlate/Materials/PBRMaterial/PBRShader.outputs:surface>
+            token outputs:displacement.connect = </LicensePlate/Materials/PBRMaterial/PBRShader.outputs:displacement>
+            
+            # PBR Shader
+            def Shader "PBRShader"
+            {{
+                uniform token info:id = "UsdPreviewSurface"
+                
+                # 贴图连接
+                {shader_connections_str}
+                
+                # 其他 PBR 参数
+                float inputs:ior = 1.5
+                float inputs:clearcoat = 0.0
+                float inputs:clearcoatRoughness = 0.01
+                color3f inputs:emissiveColor = (0, 0, 0)
+                float inputs:opacity = 1.0
+                
+                # 输出
+                token outputs:surface
+                token outputs:displacement
+            }}
+            
+            # UV 坐标读取器
+            def Shader "TexCoordReader"
+            {{
+                uniform token info:id = "UsdPrimvarReader_float2"
+                string inputs:varname = "st"
+                float2 outputs:result
+            }}
+            
+{texture_readers_str}
+        }}'''
+        
+        return material_section
+    
+    def _create_texture_reader(
+        self,
+        name: str,
+        texture_path: str,
+        output_channel: str
+    ) -> str:
+        """创建贴图读取器"""
+        return f'''            # {name}
+            def Shader "{name}"
+            {{
+                uniform token info:id = "UsdUVTexture"
+                asset inputs:file = @{texture_path}@
+                float2 inputs:st.connect = </LicensePlate/Materials/PBRMaterial/TexCoordReader.outputs:result>
+                token inputs:wrapS = "repeat"
+                token inputs:wrapT = "repeat"
+                token inputs:sourceColorSpace = "auto"
+                float3 outputs:rgb
+                float outputs:r
+                float outputs:g
+                float outputs:b
+                float outputs:a
+            }}'''
+    
+    def _create_normal_texture_reader(
+        self,
+        name: str,
+        texture_path: str
+    ) -> str:
+        """创建法线贴图读取器"""
+        return f'''            # {name} (Normal Map)
+            def Shader "{name}"
+            {{
+                uniform token info:id = "UsdUVTexture"
+                asset inputs:file = @{texture_path}@
+                float2 inputs:st.connect = </LicensePlate/Materials/PBRMaterial/TexCoordReader.outputs:result>
+                token inputs:wrapS = "repeat"
+                token inputs:wrapT = "repeat"
+                # 法线贴图使用 raw 颜色空间
+                token inputs:sourceColorSpace = "raw"
+                float4 inputs:scale = (2, 2, 2, 1)
+                float4 inputs:bias = (-1, -1, -1, 0)
+                float3 outputs:rgb
+            }}'''
+    
+    def generate_batch_usd(
+        self,
+        assets: List[PlateAssetInfo],
+        dataset_name: str = "license_plates"
+    ) -> Tuple[Path, List[Path]]:
+        """
+        批量生成 USD 文件
+        
+        Args:
+            assets: 车牌资产信息列表
+            dataset_name: 数据集名称
+            
+        Returns:
+            (主 USD 文件路径, 单个 USD 文件路径列表)
+        """
+        plate_usds = []
+        
+        for i, asset in enumerate(assets):
+            output_name = f"{asset.plate_number}_{i:04d}"
+            usd_path = self.generate_plate_usd(asset, output_name)
+            plate_usds.append(usd_path)
+        
+        # 生成主 USD 文件（引用所有车牌）
+        main_usd_path = self._generate_main_usd(plate_usds, dataset_name)
+        
+        return main_usd_path, plate_usds
+    
+    def _generate_main_usd(
+        self,
+        plate_usds: List[Path],
+        dataset_name: str
+    ) -> Path:
+        """生成主 USD 文件"""
+        
+        # 生成引用列表
+        references = []
+        for i, usd_path in enumerate(plate_usds):
+            ref_name = usd_path.stem
+            x_offset = (i % 10) * 0.5
+            y_offset = (i // 10) * 0.3
+            
+            references.append(f'''
+    def Xform "{ref_name}" (
+        references = @{usd_path.name}@
+    )
+    {{
+        double3 xformOp:translate = ({x_offset}, {y_offset}, 0)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }}''')
+        
+        references_str = "\n".join(references)
+        
+        main_content = f'''#usda 1.0
+(
+    defaultPrim = "LicensePlateDataset"
+    metersPerUnit = 1
+    upAxis = "Y"
+    doc = """
+    Chinese License Plate Dataset - {dataset_name}
+    
+    Contains {len(plate_usds)} license plate assets with PBR materials.
+    
+    Material Channels:
+    - BaseColor: Diffuse color with environmental effects
+    - Normal: Surface detail (cracks, scratches)
+    - Roughness: Surface roughness
+    - Metallic: Metallic properties
+    
+    Generated by Chinese License Plate Generator v2.0
+    """
+)
+
+def Xform "LicensePlateDataset" (
+    kind = "assembly"
+    customData = {{
+        int total_plates = {len(plate_usds)}
+        string dataset_name = "{dataset_name}"
+        string created_at = "{datetime.now().isoformat()}"
+    }}
+)
+{{{references_str}
+}}
+'''
+        
+        main_usd_path = self.output_dir / f"{dataset_name}.usda"
+        with open(main_usd_path, 'w', encoding='utf-8') as f:
+            f.write(main_content)
+        
+        return main_usd_path
+    
+    def generate_manifest(
+        self,
+        assets: List[PlateAssetInfo],
+        dataset_name: str
+    ) -> Path:
+        """生成资产清单 JSON"""
+        
+        manifest = {
+            "dataset_name": dataset_name,
+            "version": "2.0.0",
+            "created_at": datetime.now().isoformat(),
+            "total_assets": len(assets),
+            "pbr_channels": ["basecolor", "normal", "roughness", "metallic"],
+            "assets": []
+        }
+        
+        for i, asset in enumerate(assets):
+            asset_entry = {
+                "index": i,
+                "plate_number": asset.plate_number,
+                "plate_type": asset.plate_type,
+                "is_double": asset.is_double,
+                "dimensions": {
+                    "width_meters": asset.width_meters,
+                    "height_meters": asset.height_meters
+                },
+                "noise_preset": asset.noise_preset,
+                "usd_file": f"{asset.plate_number}_{i:04d}.usda",
+                "textures": asset.pbr_textures.to_dict() if asset.pbr_textures else {}
+            }
+            manifest["assets"].append(asset_entry)
+        
+        manifest_path = self.output_dir / f"{dataset_name}_manifest.json"
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        return manifest_path
+
+
+# ============ 测试代码 ============
+
+if __name__ == "__main__":
+    from pathlib import Path
+    
+    # 测试 PBR USD 生成
+    output_dir = Path(__file__).parent.parent / "data" / "output" / "pbr_usd_test"
+    generator = PBRUSDGenerator(output_dir)
+    
+    # 创建测试资产
+    test_asset = PlateAssetInfo(
+        plate_number="京A12345",
+        plate_type="blue",
+        is_double=False,
+        noise_preset="medium"
+    )
+    
+    # 生成 USD
+    usd_path = generator.generate_plate_usd(test_asset, "test_plate")
+    print(f"✅ 生成 USD 文件: {usd_path}")
