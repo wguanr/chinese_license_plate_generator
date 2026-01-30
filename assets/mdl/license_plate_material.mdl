@@ -1,0 +1,90 @@
+mdl 1.7;
+
+import ::base::*;
+import ::math::*;
+import ::state::*;
+import ::tex::*;
+import ::anno::*;
+import ::df::*;
+
+// 车牌材质基础定义
+export material license_plate_material(
+    uniform texture_2d albedo_texture = texture_2d(),
+    uniform float roughness = 0.5,
+    uniform float metallic = 0.1
+) = material(
+    surface: material_surface(
+        scattering: df::weighted_layer(
+            weight: 1.0,
+            layer: df::microfacet_ggx_smith_bsdf(
+                roughness_u: roughness,
+                roughness_v: roughness,
+                tint: tex::lookup_color(albedo_texture, state::texture_coordinate(0)),
+                mode: df::scatter_reflect
+            ),
+            base: df::diffuse_reflection_bsdf(
+                tint: tex::lookup_color(albedo_texture, state::texture_coordinate(0)) * (1.0 - metallic)
+            )
+        )
+    )
+);
+
+// 民用车辆车牌材质实例
+export material civilian_plate_instance(
+    string albedo_path
+) = license_plate_material(
+    albedo_texture: texture_2d(albedo_path),
+    roughness: 0.2,
+    metallic: 0.1
+);
+
+// 新能源车辆车牌材质实例
+export material new_energy_plate_instance(
+    string albedo_path
+) = license_plate_material(
+    albedo_texture: texture_2d(albedo_path),
+    roughness: 0.15,
+    metallic: 0.8
+);
+
+// 商用车辆车牌材质实例
+export material commercial_plate_instance(
+    string albedo_path
+) = license_plate_material(
+    albedo_texture: texture_2d(albedo_path),
+    roughness: 0.3,
+    metallic: 0.5
+);
+
+// 官方车辆车牌材质实例
+export material official_plate_instance(
+    string albedo_path
+) = license_plate_material(
+    albedo_texture: texture_2d(albedo_path),
+    roughness: 0.1,
+    metallic: 0.9
+);
+
+// 特殊车辆车牌材质实例
+export material special_plate_instance(
+    string albedo_path
+) = license_plate_material(
+    albedo_texture: texture_2d(albedo_path),
+    roughness: 0.05,
+    metallic: 0.95
+);
+
+// 通用车牌材质实例化函数
+export material create_plate_material(
+    string albedo_path,
+    string variant_type = "civilian"
+) = let {
+    material_func = switch(variant_type) {
+        "civilian": civilian_plate_instance,
+        "new_energy": new_energy_plate_instance,
+        "commercial": commercial_plate_instance,
+        "official": official_plate_instance,
+        "special": special_plate_instance,
+        default: civilian_plate_instance
+    };
+} in material_func(albedo_path); 
